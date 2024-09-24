@@ -20,7 +20,7 @@
 # start with defining some variables to make life a bit easier
 
 # filebase of all files that are going to be compiled
-PROG_FILE_BASE_NAME = main create_folder cJSON
+PROG_FILE_BASE_NAME = main cJSON initialize_grid advance_fields background_profiles boundary_module save_data grid_io auxiliar_module free_allocated_memory power_module antenna_module
 
 # name of output (executable) file
 EXE_NAME = exe
