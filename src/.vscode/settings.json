@@ -1,6 +1,5 @@
 {
     "files.associations": {
-        "random": "c",
-        "string.h": "c"
+        "cstdlib": "c"
     }
 }
