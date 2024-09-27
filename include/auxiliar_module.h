@@ -8,9 +8,8 @@
 #include "focal-struct.h"
 #include "macros-grid.h"
 
-void density2save(gridConfiguration *gridCfg, saveData *saveDCfg, systemGrid *G);
-
 int set2zero_1D( size_t N_x, double arr_1D[N_x] );
 int set2zero_3D( size_t N_x, size_t N_y, size_t N_z, double arr_3D[N_x][N_y][N_z] );
+int setZero2save( gridConfiguration *gridCfg, saveData *saveDCfg);
 
 #endif

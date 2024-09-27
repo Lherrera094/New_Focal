@@ -12,7 +12,7 @@
 #define dxG(gridCfg)            gridCfg->dx
 #define dtG(gridCfg)            gridCfg->dt
 #define ne_profileG(gridCfg)    gridCfg->ne_profile
-#define ne_maxG(gridCfg)        gridCfg->ne_max
+#define ne_0G(gridCfg)          gridCfg->ne_0
 #define B0_profileG(gridCfg)    gridCfg->B0_profile
 #define B0_valueG(gridCfg)      gridCfg->B0_value
 #define boundaryG(gridCfg)      gridCfg->boundary
@@ -27,7 +27,7 @@
 #define dx                      dxG(gridCfg)
 #define dt                      dtG(gridCfg)
 #define ne_profile              ne_profileG(gridCfg)
-#define ne_max                  ne_maxG(gridCfg)
+#define ne_0                    ne_0G(gridCfg)
 #define B0_profile              B0_profileG(gridCfg)
 #define B0_value                B0_valueG(gridCfg)
 #define boundary_sel            boundaryG(gridCfg)
@@ -86,7 +86,7 @@
 #define ant_y                           ant_yBG(beamAnt)               
 #define ant_z                           ant_zBG(beamAnt)               
 #define rampUpMethod                    rampUpMBG(beamAnt)              
-#define omega_t                         omega_tBG(beamAnt)              
+#define t_omega                         omega_tBG(beamAnt)              
 #define antAngle_zx                     antAngle_zxBG(beamAnt)          
 #define antAngle_zy                     antAngle_zyBG(beamAnt)          
 #define ant_w0x                         ant_w0xBG(beamAnt)              
@@ -113,5 +113,67 @@
 #define E_Ydir_OLD_ref(i,j,k)                   E_Ydir_OLD_ref_G(boundaryG,i,j,k)
 #define E_Zdir_OLD_ref(i,j,k)                   E_Zdir_OLD_ref_G(boundaryG,i,j,k)
 
+/*Macros for Antenna detector*/
+#define DET_ANT_ACCES(antDetect, id, i, j)  \
+    ((id == FIELD_01) ? ( antDetect->detAnt_01_fields[ ((i) * 5) + j ] ) : \
+     (id == FIELD_02) ? ( antDetect->detAnt_01_fields[ ((i) * 5) + j ] ) : \
+     (id == FIELD_03) ? ( antDetect->detAnt_03_fields[ ((i) * 5) + j ] ) : \
+     (id == FIELD_04) ? ( antDetect->detAnt_03_fields[ ((i) * 5) + j ] ) : 0 )
+
+#define antDetect01EBG(antDetect,i,j)           antDetect->detAnt_01_fields[ ((i) * 5) + j ]
+#define antDetect02EBG(antDetect,i,j)           antDetect->detAnt_02_fields[ ((i) * 5) + j ]
+#define antDetect03EBG(antDetect,i,j)           antDetect->detAnt_03_fields[ ((i) * 5) + j ]
+#define antDetect04EBG(antDetect,i,j)           antDetect->detAnt_04_fields[ ((i) * 5) + j ]
+#define antDetect_1DG(antDetect)                antDetect->antDetect_1D
+#define detAnt01zG(antDetect)                   antDetect->detAnt_01_zpos
+#define detAnt02zG(antDetect)                   antDetect->detAnt_02_zpos
+#define detAnt03zG(antDetect)                   antDetect->detAnt_03_zpos
+#define detAnt04zG(antDetect)                   antDetect->detAnt_04_zpos
+#define detAnt01yG(antDetect)                   antDetect->detAnt_01_ypos
+
+#define detAnt_01_Fields(i,j)                   antDetect01EBG(antDetect,i,j)
+#define detAnt_02_Fields(i,j)                   antDetect02EBG(antDetect,i,j)
+#define detAnt_03_Fields(i,j)                   antDetect03EBG(antDetect,i,j)           
+#define detAnt_04_Fields(i,j)                   antDetect04EBG(antDetect,i,j)
+#define antDetect_1D                            antDetect_1DG(antDetect)
+#define detAnt_01_z                             detAnt01zG(antDetect)
+#define detAnt_02_z                             detAnt02zG(antDetect)
+#define detAnt_03_z                             detAnt03zG(antDetect)
+#define detAnt_04_z                             detAnt04zG(antDetect)
+#define detAnt_01_y                             detAnt01yG(antDetect)
+
+
+/*Macros for power struct*/
+#define powerDectS(powerValStr)                 powerValStr->pwr_dect
+#define powerAbsX1S(powerValStr)                powerValStr->power_abs_x1
+#define powerAbsX2S(powerValStr)                powerValStr->power_abs_x2
+#define powerAbsY1S(powerValStr)                powerValStr->power_abs_y1
+#define powerAbsY2S(powerValStr)                powerValStr->power_abs_y2
+#define powerAbsZ1S(powerValStr)                powerValStr->power_abs_z1
+#define powerAbsZ2S(powerValStr)                powerValStr->power_abs_z2
+#define powerAbsRefS(powerValStr)               powerValStr->power_abs_ref
+#define powerPoyX1S(powerValStr)                powerValStr->poynt_x1
+#define powerPoyX2S(powerValStr)                powerValStr->poynt_x2
+#define powerPoyY1S(powerValStr)                powerValStr->poynt_y1
+#define powerPoyY2S(powerValStr)                powerValStr->poynt_y2
+#define powerPoyZ1S(powerValStr)                powerValStr->poynt_z1
+#define powerPoyZRS(powerValStr)                powerValStr->poynt_z1_ref
+#define powerPoyZ2S(powerValStr)                powerValStr->poynt_z2
+
+#define pwr_dect                                powerDectS(powerValStr)
+#define power_abs_x1                            powerAbsX1S(powerValStr)
+#define power_abs_x2                            powerAbsX2S(powerValStr)                
+#define power_abs_y1                            powerAbsY1S(powerValStr)               
+#define power_abs_y2                            powerAbsY2S(powerValStr)                
+#define power_abs_z1                            powerAbsZ1S(powerValStr)                
+#define power_abs_z2                            powerAbsZ2S(powerValStr)                
+#define power_abs_ref                           powerAbsRefS(powerValStr)               
+#define poynt_x1                                powerPoyX1S(powerValStr)                
+#define poynt_x2                                powerPoyX2S(powerValStr)                
+#define poynt_y1                                powerPoyY1S(powerValStr)
+#define poynt_y2                                powerPoyY2S(powerValStr)                
+#define poynt_z1                                powerPoyZ1S(powerValStr)   
+#define poynt_z1_ref                            powerPoyZRS(powerValStr) 
+#define poynt_z2                                powerPoyZ2S(powerValStr)                
 
 #endif

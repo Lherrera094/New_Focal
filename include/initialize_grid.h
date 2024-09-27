@@ -13,19 +13,22 @@
 //functions in initialize grid
 void gridConfInit(  gridConfiguration *gridCfg, 
                     saveData *saveDCfg, 
-                    beamAntennaConfiguration *beamAnt );
+                    beamAntennaConfiguration *beamAnt,
+                    antennaDetector *antDetect );
 
 char *read_json();
 
 void write_JSON_onStruct(   gridConfiguration *gridCfg, 
                             saveData *saveDCfg, 
-                            beamAntennaConfiguration *beamAnt );
+                            beamAntennaConfiguration *beamAnt,
+                            antennaDetector *antDetect );
 
 void control_gridInit(  gridConfiguration *gridCfg, 
                         systemGrid *G, 
                         saveData *saveDCfg, 
                         boundaryGrid *boundaryG,
-                        beamAntennaConfiguration *beamAnt );
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect );
 
 void print_systemConfiguration(gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt );
 

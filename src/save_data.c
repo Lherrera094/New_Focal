@@ -115,12 +115,11 @@ void create_folder(saveData *saveDCfg){
 }
 
 /*Functions to save data in folders*/
-void save_data_Configuration(   gridConfiguration *gridCfg, 
-                                saveData *saveDCfg, 
-                                systemGrid *G, 
-                                beamAntennaConfiguration *beamAnt ){
-
-    size_t ii, jj, kk;
+void control_writeHDF5( gridConfiguration *gridCfg, 
+                        saveData *saveDCfg, 
+                        systemGrid *G, 
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect ){
 
     /*Char values as directions to the correct folder*/
     char fullDir[1000], filename_config[2024];
@@ -130,12 +129,25 @@ void save_data_Configuration(   gridConfiguration *gridCfg,
     //Append the name of the files
     snprintf( filename_config, sizeof(filename_config), "%s/%s", fullDir, file_config);
 
-    /*Call functions to save simulation data*/
     writeTimetraces2ascii( gridCfg, saveDCfg, fullDir );
-    writeConfig2HDF( gridCfg, saveDCfg, filename_config, beamAnt );
+    save_data_Configuration( gridCfg, saveDCfg, G, beamAnt, filename_config );
+    save_antennaDetect( gridCfg, antDetect, filename_config );
+
+}
+
+void save_data_Configuration(   gridConfiguration *gridCfg, 
+                                saveData *saveDCfg, 
+                                systemGrid *G, 
+                                beamAntennaConfiguration *beamAnt,
+                                char filename[] ){
+    
+    size_t ii, jj, kk;
+
+    /*Call functions to save simulation data*/ 
+    writeConfig2HDF( gridCfg, saveDCfg, filename, beamAnt );
 
     /*Background Density*/
-    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_config, "n_e", G->n_e) );
+    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename, "n_e", G->n_e) );
 
     // background magnetic field
     // B0x: even-odd-odd
@@ -147,7 +159,8 @@ void save_data_Configuration(   gridConfiguration *gridCfg,
             }
         }
     }
-    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_config, "B0x", saveDCfg->data2save) );
+    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename, "B0x", saveDCfg->data2save) );
+    setZero2save( gridCfg, saveDCfg);
 
     // B0y: odd-even-odd
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk)
@@ -158,7 +171,8 @@ void save_data_Configuration(   gridConfiguration *gridCfg,
             }
         }
     }
-    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_config, "B0y", saveDCfg->data2save) );
+    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename, "B0y", saveDCfg->data2save) );
+    setZero2save( gridCfg, saveDCfg);
 
     // B0z: odd-odd-even
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk)
@@ -169,8 +183,35 @@ void save_data_Configuration(   gridConfiguration *gridCfg,
             }
         }
     }
-    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_config, "B0z", saveDCfg->data2save) ) ;
-    
+    printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename, "B0z", saveDCfg->data2save) ) ;
+    setZero2save( gridCfg, saveDCfg);
+}
+
+void save_antennaDetect(    gridConfiguration *gridCfg,
+                            antennaDetector *antDetect,
+                            char filename_hdf5[]){
+
+    if ( detAnt_01_z < ( Nz - d_absorb )) {
+        detAnt1D_write2hdf5( Nx, antDetect, filename_hdf5, "/detAnt_01" , 
+                             detAnt_01_y, detAnt_01_z,
+                             FIELD_01 );
+    }
+    if ( detAnt_02_z < ( Nz - d_absorb )) {
+        detAnt1D_write2hdf5( Nx, antDetect, filename_hdf5, "/detAnt_02" , 
+                             detAnt_01_y, detAnt_02_z,
+                             FIELD_02 );
+    }
+    if ( detAnt_03_z < ( Nz - d_absorb )) {
+        detAnt1D_write2hdf5( Nx, antDetect, filename_hdf5, "/detAnt_03" , 
+                             detAnt_01_y, detAnt_03_z,
+                             FIELD_03 );
+    }
+    if ( detAnt_04_z < ( Nz - d_absorb )) {
+        detAnt1D_write2hdf5( Nx, antDetect, filename_hdf5, "/detAnt_04" , 
+                             detAnt_01_y, detAnt_04_z,
+                             FIELD_04 );
+    }
+
 }
 
 void save_data_Grid(    gridConfiguration *gridCfg, 
@@ -196,14 +237,30 @@ void save_data_Grid(    gridConfiguration *gridCfg,
             for (jj=0 ; jj < Ny ; jj+=2) {
                 for (kk=0 ; kk < Nz ; kk+=2) {
                     data2save(ii/2,jj/2,kk/2) = 
-                        sqrt(  pow( EB_WAVE(ii+1,jj  ,kk  ),2) 
-                              +pow( EB_WAVE(ii  ,jj+1,kk  ),2) 
-                              +pow( EB_WAVE(ii  ,jj  ,kk+1),2) );
+                        sqrt(  pow( EB_WAVE(ii+1,jj  ,kk  ), 2) 
+                              +pow( EB_WAVE(ii  ,jj+1,kk  ), 2) 
+                              +pow( EB_WAVE(ii  ,jj  ,kk+1), 2) );
                 }
             }
         }
-
         printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_physics, "E_abs", saveDCfg->data2save) ) ;
+        setZero2save( gridCfg, saveDCfg);
+
+        // abs(B)
+        // prepare array for that
+    /*#pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk)
+        for (ii=0 ; ii < Nx ; ii+=2) {
+            for (jj=0 ; jj < Ny ; jj+=2) {
+                for (kk=0 ; kk < Nz ; kk+=2) {
+                    data2save(ii/2,jj/2,kk/2) = 
+                        sqrt(  pow( EB_WAVE(ii  ,jj+1,kk+1), 2) 
+                              +pow( EB_WAVE(ii+1,jj  ,kk+1), 2) 
+                              +pow( EB_WAVE(ii+1,jj+1,kk  ), 2) );
+                }
+            }
+        }
+        printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_physics, "B_abs", saveDCfg->data2save) ) ;
+        */
 
     }//end if
 

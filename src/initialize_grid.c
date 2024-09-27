@@ -2,10 +2,10 @@
 
 void gridConfInit(  gridConfiguration *gridCfg, 
                     saveData *saveDCfg, 
-                    beamAntennaConfiguration *beamAnt ){
+                    beamAntennaConfiguration *beamAnt,
+                    antennaDetector *antDetect ){
 
-    printf("Reading JSON file. \n");
-    write_JSON_onStruct( gridCfg, saveDCfg, beamAnt );
+    write_JSON_onStruct( gridCfg, saveDCfg, beamAnt, antDetect );
     
     //Grid configuration variables computation
     if (boundary_sel == 1){     
@@ -16,7 +16,7 @@ void gridConfInit(  gridConfiguration *gridCfg,
 
     //Checks that maximum density value is respected
     // if density is larger than this value, FDTD code becomes instable
-    if( ne_max > period * 2./5.){
+    if( ne_0 > period * 2./5.){
         printf("Density value is too large for code stability. \n");
         printf("Maximum density: %.3f. \n", period * 2./5.);
         exit(-1);
@@ -69,12 +69,13 @@ char *read_json(){
 
 void write_JSON_onStruct(   gridConfiguration *gridCfg, 
                             saveData *saveDCfg, 
-                            beamAntennaConfiguration *beamAnt ){
+                            beamAntennaConfiguration *beamAnt,
+                            antennaDetector *antDetect ){
 
     /*Read JSON and extract data*/
     char *json_file = read_json();
     int scale;
-    //double z2w;
+    double z2w;
 
     if(json_file == NULL){
         printf("JSON file doesn't exists.");
@@ -116,7 +117,7 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
         file_trace = strdup(Filename_TimeTrace->valuestring);
     }
 
-    cJSON *t_save_f = cJSON_GetObjectItemCaseSensitive(json, "data_save_frequency");   //scale factor
+    cJSON *t_save_f = cJSON_GetObjectItemCaseSensitive(json, "data_save_frequency");   //time step for data saving
     if( cJSON_IsNumber(t_save_f) ){
         t_save = t_save_f->valueint;
     }
@@ -174,7 +175,7 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
 
     cJSON *item_ne_value = cJSON_GetObjectItemCaseSensitive(json, "ne_max");   //plasma density option
     if( cJSON_IsNumber(item_ne_value) ){
-        ne_max = item_ne_value->valuedouble;
+        ne_0 = item_ne_value->valuedouble;
     }
 
     cJSON *item_boundary = cJSON_GetObjectItemCaseSensitive(json, "Boundary_Method");   //boundary option
@@ -186,12 +187,6 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
     if( cJSON_IsNumber(item_dBoundary) ){
         d_absorb = item_dBoundary->valueint;
     }    
-
-    /*Antenna Input values*/
-    /*cJSON *item_antDetect = cJSON_GetObjectItemCaseSensitive(json, "Detector_Antenna");   //Activate Antenna
-    if( cJSON_IsNumber(item_antDetect) ){
-        ant_Detect->antDetect_1D = item_antDetect->valueint;
-    }  */     
 
     // default values to be used if input parameter are not set
     cJSON *item_ant_x = cJSON_GetObjectItemCaseSensitive(json, "Antenna_Pos_x");   //Antenna x position
@@ -241,9 +236,15 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
 
     cJSON *item_z2waist = cJSON_GetObjectItemCaseSensitive(json, "z2waist");   //
     if( cJSON_IsNumber(item_z2waist) ){
-        z2waist = item_z2waist->valuedouble;
-        z2waist = z2waist * .0;            // .2/l_0*period = -298.87
+        z2w = item_z2waist->valuedouble;
+        z2waist = z2w * .0;            // .2/l_0*period = -298.87
     }        
+
+    /*Antenna Detector Input values*/
+    cJSON *item_antDetect = cJSON_GetObjectItemCaseSensitive(json, "Detector_Antenna");   //Activate Antenna
+    if( cJSON_IsNumber(item_antDetect) ){
+        antDetect_1D = item_antDetect->valueint;
+    }     
 
     //clean up
     cJSON_Delete(json);
@@ -255,12 +256,11 @@ void control_gridInit(  gridConfiguration *gridCfg,
                         systemGrid *G, 
                         saveData *saveDCfg, 
                         boundaryGrid *boundaryG,
-                        beamAntennaConfiguration *beamAnt ){
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect ){
 
     /*Initialize system*/
-    gridConfInit( gridCfg, saveDCfg, beamAnt );
-    
-    printf("Initializing Yee grid. \n");
+    gridConfInit( gridCfg, saveDCfg, beamAnt, antDetect );
 
     /*Initialize plasma-wave grid*/
     ALLOC_3D(G->EB_WAVE, Nx, Ny, Nz, double);

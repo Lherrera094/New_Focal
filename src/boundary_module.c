@@ -802,13 +802,11 @@ void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
 
     if(boundary_sel == 1){
 
-        printf("Initializing Absobing Boundary Conditions (ABC). \n");
         eco = 10./(double)(period);
 
     }
     else if (boundary_sel == 2){
 
-        printf("Initializing Mur Absorbing Boundary (MUR).\n");
         ALLOC_3D(boundaryG->E_Xdir_OLD, d_absorb, Ny, Nz, double);
         ALLOC_3D(boundaryG->E_Ydir_OLD, Nx, d_absorb, Nz, double);
         ALLOC_3D(boundaryG->E_Zdir_OLD, Nx, Ny, d_absorb, double);
@@ -819,7 +817,7 @@ void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
 
     }
     else if(boundary_sel == 3){
-        printf("Initializing Perfectly matching layers (PML).\n");
+        
     }
     
 }

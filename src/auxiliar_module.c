@@ -32,3 +32,22 @@ int set2zero_3D( size_t N_x, size_t N_y, size_t N_z, double arr_3D[N_x][N_y][N_z
 
     return EXIT_SUCCESS;
 } //}}}
+
+int setZero2save( gridConfiguration *gridCfg, saveData *saveDCfg){
+
+    size_t
+        ii, jj, kk;
+
+    #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk)
+    for (ii=0 ; ii < Nx/2 ; ++ii) {
+        for (jj=0 ; jj < Ny/2 ; ++jj) {
+            for (kk=0 ; kk < Nz/2 ; ++kk) {
+                data2save(ii,jj,kk)  = .0;
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;
+
+
+}

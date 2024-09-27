@@ -6,7 +6,7 @@ void init_antenna( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt
     printf( "Starting to define antenna field...\n" );
     make_antenna_profile( gridCfg, beamAnt );
     T_wave      = 0;
-    omega_t     = .0;
+    t_omega     = .0;
     printf( "...done defining antenna field.\n" );
 
 }
@@ -94,17 +94,18 @@ int make_antenna_profile( gridConfiguration *gridCfg, beamAntennaConfiguration *
 void wave_injection(    gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt, 
                         systemGrid *G, int t_int ){
 
-    omega_t += 2. * M_PI/period;
+    t_omega += 2. * M_PI/period;
     // to avoid precision problems when a lot of pi's are summed up        
-    if (omega_t >= 2.*M_PI) {
-        omega_t    += -2.*M_PI;
+    if (t_omega >= 2.*M_PI) {
+        t_omega    += -2.*M_PI;
         T_wave     += 1;
-        //printf("status: number of oscillation periods: %d (t_int= %d) \n",T_wave,t_int);
     }
 
     add_source( gridCfg, beamAnt, G, 
                 .85*0.,                 // .85=Y, this values should be calculated/extracted from ne-profile 
                 t_int);
+    add_source_ref( gridCfg, beamAnt, G,
+                    .85*0, t_int );
 
 }
 
@@ -131,7 +132,7 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // note: for X-mode injection, switch cos and sin of source_1 and source_2
                 //source      = sin(omega_t - aux - curve + GouyPhase_beam + ant_phase/180.*M_PI ) * t_rise * antField_xy[(ii/2)][(jj/2)] ;
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE(ii+1,jj  ,ant_z)   += source;
             }
@@ -140,7 +141,7 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Bx
                 EB_WAVE(ii  ,jj+1,ant_z+1)   += source;
             }
@@ -152,11 +153,11 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
                 // note: for X-mode injection, switch cos and sin of source
                 //       or, add/subtract pi/2 in sine for Bx 
                 // Ex
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii+1,jj  ,ant_z)   += source;
                 // Bx
                 //source  = cos( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) + M_PI/2.) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) + M_PI/2.) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii  ,jj+1,ant_z+1) += source*(1.41)*0.;
             }
         }
@@ -179,14 +180,14 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // Ex
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii+1,jj  ,ant_z  ) += source;
                 // Ey
                 //source  = sin(omega_t + antPhaseTerms[(ii/2)][(jj/2)] + M_PI/2.) * t_rise * antField_xy[(ii/2)][(jj/2)] ;
-                source  = cos( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = cos( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii  ,jj+1,ant_z  ) += source/fact1_Hansen_corr;
                 // Ez
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii  ,jj  ,ant_z+1) += source/fact2_Hansen_corr;
             }
         }
@@ -196,7 +197,7 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE(ii+1,jj  ,ant_z  ) += source * (1.*cos(antAngle_zx/180.*M_PI));
                 if( source != 0. ){
@@ -233,7 +234,7 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // note: for X-mode injection, switch cos and sin of source_1 and source_2
                 //source      = sin(omega_t - aux - curve + GouyPhase_beam + ant_phase/180.*M_PI ) * t_rise * antField_xy[(ii/2)][(jj/2)] ;
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE_ref(ii+1,jj  ,ant_z)   += source;
             }
@@ -243,7 +244,7 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Bx
                 EB_WAVE_ref(ii  ,jj+1,ant_z+1)   += source;
             }
@@ -253,10 +254,10 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // note: for X-mode injection, switch cos and sin of source_1 and source_2
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE_ref(ii+1,jj  ,ant_z)   += source;
-                source  = sin(omega_t + antPhaseTerms(ii/2,jj/2) + M_PI/2.) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin(t_omega + antPhaseTerms(ii/2,jj/2) + M_PI/2.) * t_rise * antField_xy(ii/2,jj/2);
                 // Bx
                 EB_WAVE_ref(ii  ,jj+1,ant_z+1) += source*(1.41);
             }
@@ -278,14 +279,14 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // Ex
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE(ii+1,jj  ,ant_z  ) += source;
                 // Ey
                 //source  = sin(omega_t + antPhaseTerms[(ii/2)][(jj/2)] + M_PI/2.) * t_rise * antField_xy[(ii/2)][(jj/2)] ;
-                source  = cos( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = cos( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE_ref(ii  ,jj+1,ant_z  ) += source/fact1_Hansen_corr;
                 // Ez
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 EB_WAVE_ref(ii  ,jj  ,ant_z+1) += source/fact2_Hansen_corr;
             }
         }
@@ -294,7 +295,7 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
-                source  = sin( omega_t + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE_ref(ii+1,jj  ,ant_z  ) += source * (1.*cos( antAngle_zx/180.*M_PI ));
             }

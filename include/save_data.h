@@ -19,11 +19,22 @@ void data_folder(const char *path, const char *folder_name);
 void copyJSON(const char *path, const char *folder_name);
 void create_folder(saveData *saveDCfg);
 
+void control_writeHDF5( gridConfiguration *gridCfg, 
+                        saveData *saveDCfg, 
+                        systemGrid *G, 
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect );
+
 void save_data_Grid( gridConfiguration *gridCfg, saveData *saveDCfg, systemGrid *G, int t_int );
 
 void save_data_Configuration(   gridConfiguration *gridCfg, 
                                 saveData *saveDCfg, 
                                 systemGrid *G, 
-                                beamAntennaConfiguration *beamAnt );
+                                beamAntennaConfiguration *beamAnt,
+                                char filename[] );
+
+void save_antennaDetect(    gridConfiguration *gridCfg,
+                            antennaDetector *antDetect,
+                            char filename_hdf5[]);
 
 #endif
