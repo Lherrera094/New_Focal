@@ -178,6 +178,365 @@ double calc_poynt_4(    gridConfiguration *gridCfg,
     return fabs(poynt);
 } //}}}
 
+double calc_poynt_5( gridConfiguration *gridCfg,
+                     systemGrid *G,
+                     powerCalcValues *powerValStr,
+                     char absorber[] ) {
+//{{{
+// same as calc_poynt_4, but with spatial averaging of B-component
+    size_t
+        ii, jj, kk;
+    double
+        poynt;
+
+    poynt   = .0;
+
+    // P = E x H
+    // Px = Ey*Hz - Ez*Hy
+    // Py = Ez*Hx - Ex*Hz
+    // Pz = Ex*Hy - Ey*Hx
+    // Bx: even-odd-odd
+    // By: odd-even-odd
+    // Bz: odd-odd-even
+    // Ex: odd-even-even
+    // Ey: even-odd-even
+    // Ez: even-even-odd
+    
+    if ( strcmp(absorber,"ref_z1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii < (Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj < (Ny-pwr_dect-2) ; jj+=2) {
+                // z1-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( EB_WAVE_ref(ii+1,jj  ,pwr_dect  )
+                          *( EB_WAVE_ref(ii-1,jj  ,pwr_dect+1)
+                            +EB_WAVE_ref(ii+3,jj  ,pwr_dect+1)
+                            +EB_WAVE_ref(ii+1,jj-2,pwr_dect+1)
+                            +EB_WAVE_ref(ii+1,jj+2,pwr_dect+1) )*.25
+                          -EB_WAVE_ref(ii  ,jj+1,pwr_dect  )
+                          *( EB_WAVE_ref(ii-2,jj+1,pwr_dect+1)
+                            +EB_WAVE_ref(ii+2,jj+1,pwr_dect+1)
+                            +EB_WAVE_ref(ii  ,jj-1,pwr_dect+1)
+                            +EB_WAVE_ref(ii  ,jj+3,pwr_dect+1) )*.25 );
+            }
+        }
+    } else if ( strcmp(absorber,"z1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<(Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj<(Ny-pwr_dect-2) ; jj+=2) {
+                // z1-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( ( EB_WAVE(ii+1,jj  ,pwr_dect  ) - EB_WAVE_ref(ii+1,jj  ,pwr_dect  ) )
+                          *( ( EB_WAVE(ii-1,jj  ,pwr_dect+1) 
+                              +EB_WAVE(ii+3,jj  ,pwr_dect+1) 
+                              +EB_WAVE(ii+1,jj-2,pwr_dect+1) 
+                              +EB_WAVE(ii+1,jj+2,pwr_dect+1) )*.25
+                            -( EB_WAVE_ref(ii-1,jj  ,pwr_dect+1)
+                              +EB_WAVE_ref(ii+3,jj  ,pwr_dect+1)
+                              +EB_WAVE_ref(ii+1,jj-2,pwr_dect+1)
+                              +EB_WAVE_ref(ii+1,jj+2,pwr_dect+1) )*.25 )
+                          -( EB_WAVE(ii  ,jj+1,pwr_dect  ) - EB_WAVE_ref(ii  ,jj+1,pwr_dect  ) ) 
+                          *( ( EB_WAVE(ii-2,jj+1,pwr_dect+1) 
+                              +EB_WAVE(ii+2,jj+1,pwr_dect+1) 
+                              +EB_WAVE(ii  ,jj-1,pwr_dect+1) 
+                              +EB_WAVE(ii  ,jj+3,pwr_dect+1) )*.25
+                            -( EB_WAVE_ref(ii-2,jj+1,pwr_dect+1)
+                              +EB_WAVE_ref(ii+2,jj+1,pwr_dect+1)
+                              +EB_WAVE_ref(ii  ,jj-1,pwr_dect+1)
+                              +EB_WAVE_ref(ii  ,jj+3,pwr_dect+1) )*.25 ) );
+            }
+        }
+    } else if ( strcmp(absorber,"z2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<(Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj<(Ny-pwr_dect-2) ; jj+=2) {
+                // z2-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( EB_WAVE(ii+1,jj  ,Nz-pwr_dect  )
+                          *( EB_WAVE(ii-1,jj  ,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+3,jj  ,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+1,jj-2,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+1,jj+2,Nz-pwr_dect-1) )*.25
+                          -EB_WAVE(ii  ,jj+1,Nz-pwr_dect  )
+                          *( EB_WAVE(ii-2,jj+1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+2,jj+1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii  ,jj-1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii  ,jj+3,Nz-pwr_dect-1) )*.25 );
+                }
+            }
+    } else if ( strcmp(absorber,"x1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(jj,kk) reduction(+:poynt)
+        for (jj=pwr_dect ; jj<=(Ny-pwr_dect-2) ; jj+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // x1-plane
+                // Px = Ey*Hz - Ez*Hy
+                poynt += ( EB_WAVE(pwr_dect  ,jj+1,kk  )
+                          *( EB_WAVE(pwr_dect+1,jj-1,kk  )
+                            +EB_WAVE(pwr_dect+1,jj+3,kk  )
+                            +EB_WAVE(pwr_dect+1,jj+1,kk-2)
+                            +EB_WAVE(pwr_dect+1,jj+1,kk+2) )*.25
+                          -EB_WAVE(pwr_dect  ,jj  ,kk+1)
+                          *( EB_WAVE(pwr_dect+1,jj-2,kk+1)
+                            +EB_WAVE(pwr_dect+1,jj+2,kk+1)
+                            +EB_WAVE(pwr_dect+1,jj  ,kk-1)
+                            +EB_WAVE(pwr_dect+1,jj  ,kk+3) )*.25 );
+            }
+        }
+    } else if ( strcmp(absorber,"x2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(jj,kk) reduction(+:poynt)
+        for (jj=pwr_dect ; jj<=(Ny-pwr_dect-2) ; jj+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // x2-plane
+                // Px = Ey*Hz - Ez*Hy
+                poynt += ( EB_WAVE(Nx-pwr_dect  ,jj+1,kk  )
+                          *( EB_WAVE(Nx-pwr_dect-1,jj-1,kk  )
+                            +EB_WAVE(Nx-pwr_dect-1,jj+3,kk  )
+                            +EB_WAVE(Nx-pwr_dect-1,jj+1,kk-2)
+                            +EB_WAVE(Nx-pwr_dect-1,jj+1,kk+2) )*.25
+                          -EB_WAVE(Nx-pwr_dect  ,jj  ,kk+1)
+                          *( EB_WAVE(Nx-pwr_dect-1,jj-2,kk+1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj+2,kk+1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj  ,kk-1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj  ,kk+3) )*.25 );
+                }
+            }
+    } else if ( strcmp(absorber,"y1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,kk) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<=(Nx-pwr_dect-2) ; ii+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // y1-plane
+                // Py = Ez*Hx - Ex*Hz
+                poynt += ( EB_WAVE(ii  ,pwr_dect  ,kk+1)
+                          *( EB_WAVE(ii-2,pwr_dect+1,kk+1)
+                            +EB_WAVE(ii+2,pwr_dect+1,kk+1)
+                            +EB_WAVE(ii  ,pwr_dect+1,kk-1)
+                            +EB_WAVE(ii  ,pwr_dect+1,kk+3) )*.25
+                          -EB_WAVE(ii+1,pwr_dect  ,kk  )
+                          *( EB_WAVE(ii-1,pwr_dect+1,kk  )
+                            +EB_WAVE(ii+3,pwr_dect+1,kk  )
+                            +EB_WAVE(ii+1,pwr_dect+1,kk-2)
+                            +EB_WAVE(ii+1,pwr_dect+1,kk+2) )*.25 );
+            }
+        }
+    } else if ( strcmp(absorber,"y2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,kk) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<=(Nx-pwr_dect-2) ; ii+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // y2-plane
+                // Py = Ez*Hx - Ex*Hz
+                poynt += ( EB_WAVE(ii  ,Ny-pwr_dect  ,kk+1)
+                          *( EB_WAVE(ii-2,Ny-pwr_dect-1,kk+1)
+                            +EB_WAVE(ii+2,Ny-pwr_dect-1,kk+1)
+                            +EB_WAVE(ii  ,Ny-pwr_dect-1,kk-1)
+                            +EB_WAVE(ii  ,Ny-pwr_dect-1,kk+3) )*.25
+                          -EB_WAVE(ii+1,Ny-pwr_dect  ,kk  )
+                          *( EB_WAVE(ii-1,Ny-pwr_dect-1,kk  )
+                            +EB_WAVE(ii+3,Ny-pwr_dect-1,kk  )
+                            +EB_WAVE(ii+1,Ny-pwr_dect-1,kk-2)
+                            +EB_WAVE(ii+1,Ny-pwr_dect-1,kk+2) )*.25 );
+            }
+        }
+    }
+    
+    return fabs(poynt);
+} //}}}
+
+double calc_poynt_6( gridConfiguration *gridCfg,
+                     systemGrid *G,
+                     powerCalcValues *powerValStr,
+                     char absorber[] ) {
+//{{{
+// same as calc_poynt_5, but full spatial averaging of B-component
+
+    size_t
+        ii, jj, kk;
+    double
+        poynt;
+
+    poynt   = .0;
+
+    // P = E x H
+    // Px = Ey*Hz - Ez*Hy
+    // Py = Ez*Hx - Ex*Hz
+    // Pz = Ex*Hy - Ey*Hx
+    // Bx: even-odd-odd
+    // By: odd-even-odd
+    // Bz: odd-odd-even
+    // Ex: odd-even-even
+    // Ey: even-odd-even
+    // Ez: even-even-odd
+    
+    if ( strcmp(absorber,"ref_z1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<(Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj<(Ny-pwr_dect-2) ; jj+=2) {
+                // z1-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( EB_WAVE_ref(ii+1,jj  ,pwr_dect  )
+                          *( EB_WAVE_ref(ii-1,jj  ,pwr_dect+1)
+                            +EB_WAVE_ref(ii+3,jj  ,pwr_dect+1)
+                            +EB_WAVE_ref(ii+1,jj-2,pwr_dect+1)
+                            +EB_WAVE_ref(ii+1,jj+2,pwr_dect+1) 
+                            +EB_WAVE_ref(ii+1,jj  ,pwr_dect-1)
+                            +EB_WAVE_ref(ii+1,jj  ,pwr_dect+3) )/6.
+                          -EB_WAVE_ref(ii  ,jj+1,pwr_dect  )
+                          *( EB_WAVE_ref(ii-2,jj+1,pwr_dect+1)
+                            +EB_WAVE_ref(ii+2,jj+1,pwr_dect+1)
+                            +EB_WAVE_ref(ii  ,jj-1,pwr_dect+1)
+                            +EB_WAVE_ref(ii  ,jj+3,pwr_dect+1)
+                            +EB_WAVE_ref(ii  ,jj+1,pwr_dect-1)
+                            +EB_WAVE_ref(ii  ,jj+1,pwr_dect+3) )/6. );
+            }
+        }
+    } else if ( strcmp(absorber,"z1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<(Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj<(Ny-pwr_dect-2) ; jj+=2) {
+                // z1-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( ( EB_WAVE(ii+1,jj  ,pwr_dect  ) - EB_WAVE_ref(ii+1,jj  ,pwr_dect  ) )
+                          *( ( EB_WAVE(ii-1,jj  ,pwr_dect+1) 
+                              +EB_WAVE(ii+3,jj  ,pwr_dect+1) 
+                              +EB_WAVE(ii+1,jj-2,pwr_dect+1) 
+                              +EB_WAVE(ii+1,jj+2,pwr_dect+1)
+                              +EB_WAVE(ii+1,jj  ,pwr_dect-1) 
+                              +EB_WAVE(ii+1,jj  ,pwr_dect+3) )/6.
+                            -( EB_WAVE_ref(ii-1,jj  ,pwr_dect+1)
+                              +EB_WAVE_ref(ii+3,jj  ,pwr_dect+1)
+                              +EB_WAVE_ref(ii+1,jj-2,pwr_dect+1)
+                              +EB_WAVE_ref(ii+1,jj+2,pwr_dect+1)
+                              +EB_WAVE_ref(ii+1,jj  ,pwr_dect-1)
+                              +EB_WAVE_ref(ii+1,jj  ,pwr_dect+3) )/6. )
+                          -( EB_WAVE(ii  ,jj+1,pwr_dect  ) - EB_WAVE_ref(ii  ,jj+1,pwr_dect  ) ) 
+                          *( ( EB_WAVE(ii-2,jj+1,pwr_dect+1) 
+                              +EB_WAVE(ii+2,jj+1,pwr_dect+1) 
+                              +EB_WAVE(ii  ,jj-1,pwr_dect+1) 
+                              +EB_WAVE(ii  ,jj+3,pwr_dect+1)
+                              +EB_WAVE(ii  ,jj+1,pwr_dect-1) 
+                              +EB_WAVE(ii  ,jj+1,pwr_dect+3) )/6.
+                            -( EB_WAVE_ref(ii-2,jj+1,pwr_dect+1)
+                              +EB_WAVE_ref(ii+2,jj+1,pwr_dect+1)
+                              +EB_WAVE_ref(ii  ,jj-1,pwr_dect+1)
+                              +EB_WAVE_ref(ii  ,jj+3,pwr_dect+1)
+                              +EB_WAVE_ref(ii  ,jj+1,pwr_dect-1)
+                              +EB_WAVE_ref(ii  ,jj+1,pwr_dect+3) )/6. ) );
+            }
+        }
+    } else if ( strcmp(absorber,"z2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,jj) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<(Nx-pwr_dect-2) ; ii+=2) {
+            for (jj=pwr_dect ; jj<(Ny-pwr_dect-2) ; jj+=2) {
+                // z2-plane
+                // Pz = Ex*Hy - Ey*Hx
+                poynt += ( EB_WAVE(ii+1,jj  ,Nz-pwr_dect  )
+                          *( EB_WAVE(ii-1,jj  ,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+3,jj  ,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+1,jj-2,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+1,jj+2,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+1,jj  ,Nz-pwr_dect-3)
+                            +EB_WAVE(ii+1,jj  ,Nz-pwr_dect+1) )/6.
+                          -EB_WAVE(ii  ,jj+1,Nz-pwr_dect  )
+                          *( EB_WAVE(ii-2,jj+1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii+2,jj+1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii  ,jj-1,Nz-pwr_dect-1)
+                            +EB_WAVE(ii  ,jj+3,Nz-pwr_dect-1)
+                            +EB_WAVE(ii  ,jj+1,Nz-pwr_dect-3)
+                            +EB_WAVE(ii  ,jj+1,Nz-pwr_dect+1) )/6. );
+                }
+            }
+    } else if ( strcmp(absorber,"x1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(jj,kk) reduction(+:poynt)
+        for (jj=pwr_dect ; jj<=(Ny-pwr_dect-2) ; jj+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // x1-plane
+                // Px = Ey*Hz - Ez*Hy
+                poynt += ( EB_WAVE(pwr_dect  ,jj+1,kk  )
+                          *( EB_WAVE(pwr_dect+1,jj-1,kk  )
+                            +EB_WAVE(pwr_dect+1,jj+3,kk  )
+                            +EB_WAVE(pwr_dect+1,jj+1,kk-2)
+                            +EB_WAVE(pwr_dect+1,jj+1,kk+2)
+                            +EB_WAVE(pwr_dect-1,jj+1,kk  )
+                            +EB_WAVE(pwr_dect+3,jj+1,kk  ) )/6.
+                          -EB_WAVE(pwr_dect  ,jj  ,kk+1)
+                          *( EB_WAVE(pwr_dect+1,jj-2,kk+1)
+                            +EB_WAVE(pwr_dect+1,jj+2,kk+1)
+                            +EB_WAVE(pwr_dect+1,jj  ,kk-1)
+                            +EB_WAVE(pwr_dect+1,jj  ,kk+3)
+                            +EB_WAVE(pwr_dect-1,jj  ,kk+1)
+                            +EB_WAVE(pwr_dect+3,jj  ,kk+1) )/6. );
+            }
+        }
+    } else if ( strcmp(absorber,"x2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(jj,kk) reduction(+:poynt)
+        for (jj=pwr_dect ; jj<=(Ny-pwr_dect-2) ; jj+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // x2-plane
+                // Px = Ey*Hz - Ez*Hy
+                poynt += ( EB_WAVE(Nx-pwr_dect  ,jj+1,kk  )
+                          *( EB_WAVE(Nx-pwr_dect-1,jj-1,kk  )
+                            +EB_WAVE(Nx-pwr_dect-1,jj+3,kk  )
+                            +EB_WAVE(Nx-pwr_dect-1,jj+1,kk-2)
+                            +EB_WAVE(Nx-pwr_dect-1,jj+1,kk+2)
+                            +EB_WAVE(Nx-pwr_dect-3,jj+1,kk  )
+                            +EB_WAVE(Nx-pwr_dect+1,jj+1,kk  ) )/6.
+                          -EB_WAVE(Nx-pwr_dect  ,jj  ,kk+1)
+                          *( EB_WAVE(Nx-pwr_dect-1,jj-2,kk+1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj+2,kk+1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj  ,kk-1)
+                            +EB_WAVE(Nx-pwr_dect-1,jj  ,kk+3)
+                            +EB_WAVE(Nx-pwr_dect-3,jj  ,kk+1)
+                            +EB_WAVE(Nx-pwr_dect+1,jj  ,kk+1) )/6. );
+                }
+            }
+    } else if ( strcmp(absorber,"y1") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,kk) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<=(Nx-pwr_dect-2) ; ii+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // y1-plane
+                // Py = Ez*Hx - Ex*Hz
+                poynt += ( EB_WAVE(ii  ,pwr_dect  ,kk+1)
+                          *( EB_WAVE(ii-2,pwr_dect+1,kk+1)
+                            +EB_WAVE(ii+2,pwr_dect+1,kk+1)
+                            +EB_WAVE(ii  ,pwr_dect+1,kk-1)
+                            +EB_WAVE(ii  ,pwr_dect+1,kk+3)
+                            +EB_WAVE(ii  ,pwr_dect-1,kk+1)
+                            +EB_WAVE(ii  ,pwr_dect+3,kk+1) )/6.
+                          -EB_WAVE(ii+1,pwr_dect  ,kk  )
+                          *( EB_WAVE(ii-1,pwr_dect+1,kk  )
+                            +EB_WAVE(ii+3,pwr_dect+1,kk  )
+                            +EB_WAVE(ii+1,pwr_dect+1,kk-2)
+                            +EB_WAVE(ii+1,pwr_dect+1,kk+2)
+                            +EB_WAVE(ii+1,pwr_dect-1,kk  )
+                            +EB_WAVE(ii+1,pwr_dect+3,kk  ) )/6. );
+            }
+        }
+    } else if ( strcmp(absorber,"y2") == 0 ) {
+#pragma omp parallel for collapse(2) default(shared) private(ii,kk) reduction(+:poynt)
+        for (ii=pwr_dect ; ii<=(Nx-pwr_dect-2) ; ii+=2) {
+            for (kk=pwr_dect ; kk<=(Nz-pwr_dect-2) ; kk+=2) {
+                // y2-plane
+                // Py = Ez*Hx - Ex*Hz
+                poynt += ( EB_WAVE(ii  ,Ny-pwr_dect  ,kk+1)
+                          *( EB_WAVE(ii-2,Ny-pwr_dect-1,kk+1)
+                            +EB_WAVE(ii+2,Ny-pwr_dect-1,kk+1)
+                            +EB_WAVE(ii  ,Ny-pwr_dect-1,kk-1)
+                            +EB_WAVE(ii  ,Ny-pwr_dect-1,kk+3)
+                            +EB_WAVE(ii  ,Ny-pwr_dect-3,kk+1)
+                            +EB_WAVE(ii  ,Ny-pwr_dect+1,kk+1) )/6.
+                          -EB_WAVE(ii+1,Ny-pwr_dect  ,kk  )
+                          *( EB_WAVE(ii-1,Ny-pwr_dect-1,kk  )
+                            +EB_WAVE(ii+3,Ny-pwr_dect-1,kk  )
+                            +EB_WAVE(ii+1,Ny-pwr_dect-1,kk-2)
+                            +EB_WAVE(ii+1,Ny-pwr_dect-1,kk+2)
+                            +EB_WAVE(ii+1,Ny-pwr_dect-3,kk  )
+                            +EB_WAVE(ii+1,Ny-pwr_dect+1,kk  ) )/6. );
+            }
+        }
+    }
+    
+    return fabs(poynt);
+} //}}}
+
 /*Timetraces computing functions*/
 void compute_timetraces(        gridConfiguration *gridCfg, 
                                 saveData *saveDCfg, 

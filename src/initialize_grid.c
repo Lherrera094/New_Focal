@@ -1,5 +1,18 @@
 #include "initialize_grid.h"
 
+void control_gridInit(  gridConfiguration *gridCfg, 
+                        systemGrid *G, 
+                        saveData *saveDCfg, 
+                        boundaryGrid *boundaryG,
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect ){
+
+    /*Initialize system*/
+    gridConfInit( gridCfg, saveDCfg, beamAnt, antDetect );
+    allocateMemory_structs( gridCfg, G, saveDCfg, beamAnt, antDetect );
+
+}
+
 void gridConfInit(  gridConfiguration *gridCfg, 
                     saveData *saveDCfg, 
                     beamAntennaConfiguration *beamAnt,
@@ -15,14 +28,14 @@ void gridConfInit(  gridConfiguration *gridCfg,
     }
 
     //Checks that maximum density value is respected
-    // if density is larger than this value, FDTD code becomes instable
+    // if density is larger than this value, FDTD code becomes unstable
     if( ne_0 > period * 2./5.){
         printf("Density value is too large for code stability. \n");
         printf("Maximum density: %.3f. \n", period * 2./5.);
         exit(-1);
     }
     
-    Nz_ref  = 2 * d_absorb + (int)period;
+    Nz_ref  = (2 * d_absorb) + (int)period;
     
     // dt/dx = 0.5 is commenly used in 2D FDTD codes
     // Note that period refers to the wavelength in the numerical grid and not
@@ -173,7 +186,7 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
         ne_profile = item_ne->valueint;
     }
 
-    cJSON *item_ne_value = cJSON_GetObjectItemCaseSensitive(json, "ne_max");   //plasma density option
+    cJSON *item_ne_value = cJSON_GetObjectItemCaseSensitive(json, "ne_0");   //plasma density option
     if( cJSON_IsNumber(item_ne_value) ){
         ne_0 = item_ne_value->valuedouble;
     }
@@ -252,15 +265,11 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
 
 }
 
-void control_gridInit(  gridConfiguration *gridCfg, 
-                        systemGrid *G, 
-                        saveData *saveDCfg, 
-                        boundaryGrid *boundaryG,
-                        beamAntennaConfiguration *beamAnt,
-                        antennaDetector *antDetect ){
-
-    /*Initialize system*/
-    gridConfInit( gridCfg, saveDCfg, beamAnt, antDetect );
+void allocateMemory_structs( gridConfiguration *gridCfg, 
+                             systemGrid *G,
+                             saveData *saveDCfg, 
+                             beamAntennaConfiguration *beamAnt,
+                             antennaDetector *antDetect ){
 
     /*Initialize plasma-wave grid*/
     ALLOC_3D(G->EB_WAVE, Nx, Ny, Nz, double);
@@ -278,6 +287,7 @@ void control_gridInit(  gridConfiguration *gridCfg,
 
 }
 
+/*Configuration print on console*/
 void print_systemConfiguration(gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt ){
 
     // print some info to console
@@ -290,6 +300,7 @@ void print_systemConfiguration(gridConfiguration *gridCfg, beamAntennaConfigurat
     printf( "ant_w0x = %.2f, ant_w0y = %.2f\n", ant_w0x, ant_w0y ); 
     printf( "ant_x = %d, ant_y = %d, ant_z = %d\n", ant_x, ant_y, ant_z );
     printf( "Boundary condition set to '%d'\n", boundary_sel );
+    printf( "Courant number = %.2f. \n", dt/dx);
 
 }
 

@@ -1,37 +1,4 @@
-#include <limits.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <strings.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <getopt.h>
-#include <sys/stat.h>
-#include <stdbool.h>
-#include <time.h>
-
-// check if compiler understands OMP, if not, this file does probably not exist
-#ifdef _OPENMP
-    #include <omp.h>  
-#endif
-
-#define HDF5
-#ifdef HDF5
-    #include "hdf5.h"
-#endif
-
-#include "focal-struct.h"
-#include "alloc-memory.h"
-#include "constants.h"
-#include "initialize_grid.h"
-#include "background_profiles.h"
-#include "advance_fields.h"
-#include "boundary_module.h"
-#include "save_data.h"
-#include "free_allocated_memory.h"
-#include "power_module.h"
-#include "antenna_module.h"
-#include "antenna_detector_module.h"
+#include "main_head.h"
 
 int main( int argc, char *argv[] ){
 
@@ -45,7 +12,7 @@ int main( int argc, char *argv[] ){
 
     /*Call structs*/
     gridConfiguration           gridCfg;
-    powerCalcValues             powerValStr;
+    powerCalcValues             powerValStr; 
     systemGrid                  *G;
     saveData                    *saveDCfg;   
     boundaryGrid                *boundaryG;
@@ -67,7 +34,6 @@ int main( int argc, char *argv[] ){
     initialize_power( &gridCfg, &powerValStr );                             /*Init power values*/
     control_background_profiles( &gridCfg, G);                              /*Define background ne and B0 profiles*/
 
-
     print_systemConfiguration( &gridCfg, beamAnt);                          /*Print all system configurations*/
     init_antennaDetect( antDetect, &gridCfg, beamAnt);
 
@@ -85,12 +51,11 @@ int main( int argc, char *argv[] ){
         
         wave_injection( &gridCfg, beamAnt, G, t_int );                          /*antenna_module.c*/
         advance_boundary(&gridCfg, G, boundaryG);                               /*boundary_module.c*/
-        advance_fields(&gridCfg, G);                                            /*advance_fields.c*/
+        advance_fields(&gridCfg, G, boundaryG);                                 /*advance_fields.c*/
 
         control_antenna_detector( antDetect, &gridCfg, G, t_int );              /*antenna_detector_module.c*/
         control_power( &gridCfg, G, &powerValStr, saveDCfg, beamAnt, t_int );   /*power_module.c*/
         save_data_Grid( &gridCfg, saveDCfg, G, t_int );                         /*save_data.c*/
-      
     }
 
     /*Save simulation data*/

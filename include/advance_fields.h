@@ -11,6 +11,9 @@
 #include "macros-grid.h"
 #include "constants.h"
 
+void advance_fields( gridConfiguration *gridCfg, 
+                     systemGrid *G,
+                     boundaryGrid *boundaryG );
 
 int advance_J( gridConfiguration *gridCfg, 
                systemGrid *G );
@@ -27,11 +30,13 @@ int advance_E( gridConfiguration *gridCfg,
 int advance_E_ref( gridConfiguration *gridCfg, 
                    systemGrid *G ); 
 
-void advance_fields( gridConfiguration *gridCfg, 
-                    systemGrid *G );
+int advance_B_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG );
 
-int set2zero_1D( size_t N_x, double arr_1D[N_x] );
-int set2zero_3D( size_t N_x, size_t N_y, size_t N_z, double arr_3D[N_x][N_y][N_z] );
+int advance_E_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG );
 
 #endif  // FOCAL_H
 

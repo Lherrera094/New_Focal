@@ -28,35 +28,35 @@ int make_antenna_profile( gridConfiguration *gridCfg, beamAntennaConfiguration *
         antPhaseCurve_x, antPhaseCurve_y,
         antPhaseGouy_x, antPhaseGouy_y;
 
-    for (ii=0 ; ii < (Nx/2) ; ++ii) {
+    for (ii=0 ; ii < (Nx/2) ; ii+=1) {
         // beam coordinate system
-        antBeam_r_x = ((double)ii-(double)ant_x/2.) * cos(antAngle_zx/180.*M_PI);
-        antBeam_z_x = ((double)ii-(double)ant_x/2.) * sin(antAngle_zx/180.*M_PI) * cos(antAngle_zy/180.*M_PI) + (z2waist/2);
+        antBeam_r_x  = ((double)ii-(double)ant_x/2.) * cos(antAngle_zx/180.*M_PI);
+        antBeam_z_x  = ((double)ii-(double)ant_x/2.) * sin(antAngle_zx/180.*M_PI) * cos(antAngle_zy/180.*M_PI) + z2waist/2;
 
         // account for tilted Gauss beam
         // w(z)=w0*sqrt(1+(lambda*z/pi*w0^2)^2)
-        antBeam_wx = ant_w0x * (period/2.) * sqrt( 1. + pow( (period/2) * antBeam_z_x/( M_PI*pow(ant_w0x*(period/2), 2) ), 2) );
+        antBeam_wx  = ant_w0x*(period/2.) * sqrt( 1. + pow( (period/2)*antBeam_z_x/( M_PI*pow(ant_w0x*(period/2), 2) ) , 2)  );
 
         // phase variation along beam in atenna plane
-        antPhase_x = antBeam_z_x * 2.*M_PI/(period/2.);
+        antPhase_x  = antBeam_z_x * 2.*M_PI/(period/2.);
 
         // phase variation due to curvature of phase fronts
         // radius of curvature of phasefronts: R(z)=z+1/z*(pi*w0^2/lambda)^2
-        antPhaseCurve_xR = antBeam_z_x + 1./(antBeam_z_x + 1e-5) 
+        antPhaseCurve_xR    = antBeam_z_x + 1./(antBeam_z_x + 1e-5) 
                                            *pow( M_PI * pow(ant_w0x*period/2., 2) / (period/2) , 2 );
-        antPhaseCurve_x  = pow(antBeam_r_x,2) / (2.*antPhaseCurve_xR) * 2.*M_PI/(period/2);
+        antPhaseCurve_x     = pow(antBeam_r_x,2) / (2.*antPhaseCurve_xR) * 2.*M_PI/(period/2);
 
-        for (jj=0 ; jj < (Ny/2) ; ++jj) {
+        for (jj=0 ; jj < (Ny/2) ; jj+=1) {
             // beam coordinate system
             antBeam_r_y  = ((double)jj-(double)ant_y/2.) * cos(antAngle_zy/180.*M_PI);
-            antBeam_z_y  = ((double)jj-(double)ant_y/2.) * sin(antAngle_zy/180.*M_PI) * cos(antAngle_zx/180.*M_PI) + (z2waist/2);
+            antBeam_z_y  = ((double)jj-(double)ant_y/2.) * sin(antAngle_zy/180.*M_PI) * cos(antAngle_zx/180.*M_PI) + z2waist/2;
         
             // account for tilted Gauss beam
             // w(z)=w0*sqrt(1+(lambda*z/pi*w0^2)^2)
-            antBeam_wy = ant_w0y*(period/2.) * sqrt( 1. + pow( (period/2.)*antBeam_z_y/( M_PI*pow(ant_w0y*(period/2.), 2) ), 2) );
+            antBeam_wy  = ant_w0y*(period/2.) * sqrt( 1. + pow( (period/2.)*antBeam_z_y/( M_PI*pow(ant_w0y*(period/2.), 2) ) , 2)  );
 
             // envelope of antenna field
-            antField_xy(ii,jj) =  exp( -1.*pow(antBeam_r_x/antBeam_wx, 2) ) 
+            antField_xy(ii,jj) = exp( -1.*pow(antBeam_r_x/antBeam_wx, 2) ) 
                                  *exp( -1.*pow(antBeam_r_y/antBeam_wy, 2) );
             // factor: w0/w(z)
             antField_xy(ii,jj) *= ant_w0x*(period/2)/antBeam_wx * ant_w0y*(period/2)/antBeam_wy;
@@ -73,17 +73,17 @@ int make_antenna_profile( gridConfiguration *gridCfg, beamAntennaConfiguration *
             // account for the Gouy-phase
             // phase_Gouy = arctan(z/z_R) 
             // with z_R = pi*w_0^2/lambda the Rayleigh range
-            antPhaseGouy_x  = atan( period/2.*antBeam_z_x / (M_PI * pow(ant_w0x * period/2., 2) ) );
-            antPhaseGouy_y  = atan( period/2.*antBeam_z_y / (M_PI * pow(ant_w0y * period/2., 2) ) );
+            antPhaseGouy_x  = atan( period/2.*antBeam_z_x / (M_PI * pow(ant_w0x*period/2., 2) ) );
+            antPhaseGouy_y  = atan( period/2.*antBeam_z_y / (M_PI * pow(ant_w0y*period/2., 2) ) );
 
                 //ant_phase   = .0; <<--- extra phase-term
 
-            antPhaseTerms(ii,jj)  = -antPhase_x 
-                                    -antPhase_y
-                                    -antPhaseCurve_x
-                                    -antPhaseCurve_y
-                                    -antPhaseGouy_x
-                                    -antPhaseGouy_y;
+            antPhaseTerms(ii,jj)   = -antPhase_x 
+                                      -antPhase_y
+                                      -antPhaseCurve_x
+                                      -antPhaseCurve_y
+                                      -antPhaseGouy_x
+                                      -antPhaseGouy_y;
         }
     }
 
@@ -125,7 +125,7 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
 
     // slowly increase field in time 
     t_rise  = antenna_field_rampup( rampUpMethod, period, t_int );
-
+    
     if ( exc_signal == 1 ) {
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
@@ -141,7 +141,7 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
 #pragma omp parallel for collapse(2) default(shared) private(ii, jj, source)
         for ( ii=2 ; ii < Nx ; ii+=2 ) {
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
-                source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
+                source  = sin( t_omega + antPhaseTerms(ii/2-1,jj/2) ) * t_rise * antField_xy(ii/2-1,jj/2);
                 // Bx
                 EB_WAVE(ii  ,jj+1,ant_z+1)   += source;
             }
@@ -200,12 +200,8 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
                 source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
                 // Ex
                 EB_WAVE(ii+1,jj  ,ant_z  ) += source * (1.*cos(antAngle_zx/180.*M_PI));
-                if( source != 0. ){
-                    printf("Position (%ld,%ld) = %.5f \n", ii,jj,source);
-                }
             }
         }
-        //printf("source value = %.5f \n", source);
     }
 
     return EXIT_SUCCESS;
@@ -301,7 +297,6 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
             }
         }
     }
-
 
     return EXIT_SUCCESS;
 }//}}}

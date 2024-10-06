@@ -13,11 +13,11 @@
 #include "grid_io.h"
 #include "auxiliar_module.h"
 
+void create_folder(saveData *saveDCfg);
 void simulation_folder(const char *path);
 void system_evolution_folder(const char *path, const char *folder_name);
 void data_folder(const char *path, const char *folder_name);
 void copyJSON(const char *path, const char *folder_name);
-void create_folder(saveData *saveDCfg);
 
 void control_writeHDF5( gridConfiguration *gridCfg, 
                         saveData *saveDCfg, 
@@ -36,5 +36,7 @@ void save_data_Configuration(   gridConfiguration *gridCfg,
 void save_antennaDetect(    gridConfiguration *gridCfg,
                             antennaDetector *antDetect,
                             char filename_hdf5[]);
+
+void writeFile( gridConfiguration *gridCfg, systemGrid *G, beamAntennaConfiguration *beamAnt );
 
 #endif

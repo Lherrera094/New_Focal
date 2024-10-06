@@ -23,6 +23,11 @@ double calc_poynt_4(    gridConfiguration *gridCfg,
                         powerCalcValues *powerValStr,
                         char absorber[] );
 
+double calc_poynt_5( gridConfiguration *gridCfg,
+                     systemGrid *G,
+                     powerCalcValues *powerValStr,
+                     char absorber[] );
+
 void compute_timetraces(    gridConfiguration *gridCfg, 
                             saveData *saveDCfg, 
                             beamAntennaConfiguration *beamAnt,

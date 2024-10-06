@@ -1,6 +1,15 @@
 #include "save_data.h"
 
 /*Call functions to create path folder and simulation folder*/
+void create_folder(saveData *saveDCfg){
+
+    simulation_folder( projectPath );
+    data_folder( projectPath, foldername );
+    system_evolution_folder(projectPath, foldername );
+    copyJSON( projectPath, foldername );
+    
+}
+
 void simulation_folder(const char *path){
     
     struct stat st = {0};
@@ -103,15 +112,6 @@ void copyJSON(const char *path, const char *folder_name){
     fclose(destFile);
 
     printf("JSON file saved.\n");
-}
-
-void create_folder(saveData *saveDCfg){
-
-    simulation_folder( projectPath );
-    data_folder( projectPath, foldername );
-    system_evolution_folder(projectPath, foldername );
-    copyJSON( projectPath, foldername );
-    
 }
 
 /*Functions to save data in folders*/
@@ -227,7 +227,7 @@ void save_data_Grid(    gridConfiguration *gridCfg,
             fprintf(stderr, "Error: Directory path is too long.\n");
         }
         //Append the name of the files
-        snprintf( filename_physics, sizeof(filename_physics), "%s/System_evolution/%s_time=%d", fullDir, file_hdf5, t_int / (int)period );
+        snprintf( filename_physics, sizeof(filename_physics), "%s/System_evolution/%s_time=%d", fullDir, file_hdf5, t_int/(int)period );
 
         // save into hdf5
         // abs(E)
@@ -246,23 +246,26 @@ void save_data_Grid(    gridConfiguration *gridCfg,
         printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_physics, "E_abs", saveDCfg->data2save) ) ;
         setZero2save( gridCfg, saveDCfg);
 
-        // abs(B)
-        // prepare array for that
-    /*#pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk)
-        for (ii=0 ; ii < Nx ; ii+=2) {
-            for (jj=0 ; jj < Ny ; jj+=2) {
-                for (kk=0 ; kk < Nz ; kk+=2) {
-                    data2save(ii/2,jj/2,kk/2) = 
-                        sqrt(  pow( EB_WAVE(ii  ,jj+1,kk+1), 2) 
-                              +pow( EB_WAVE(ii+1,jj  ,kk+1), 2) 
-                              +pow( EB_WAVE(ii+1,jj+1,kk  ), 2) );
-                }
-            }
-        }
-        printf( "status of writeMyHDF_v4: %d\n", writeMyHDF_v4( gridCfg, filename_physics, "B_abs", saveDCfg->data2save) ) ;
-        */
-
     }//end if
 
 }
 
+/*This function is for diagnostics*/
+void writeFile( gridConfiguration *gridCfg, systemGrid *G, beamAntennaConfiguration *beamAnt ){
+    char filename[100];
+    sprintf(filename, "PhaseGouy.txt");
+
+    FILE *fptr = fopen(filename, "w");
+
+    if(fptr == NULL){
+        printf("Error opening the file. \n");
+    }
+
+    for(int i = 0; i < Nx; i+=1){
+        for(int j = 0; j < Ny; j+=1){
+            fprintf(fptr, "(%d,%d,4): %.5f \n",i,j, EB_WAVE(i/2,j/2,4) );
+        }
+    }
+    
+    fclose(fptr);
+}

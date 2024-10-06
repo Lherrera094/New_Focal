@@ -1,5 +1,72 @@
 #include "boundary_module.h"
 
+/*Initialize boundary conditions*/
+void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
+
+    if(boundary_sel == 1){
+
+        eco = 10./(double)(period);
+
+    }
+    else if (boundary_sel == 2){
+
+        ALLOC_3D(boundaryG->E_Xdir_OLD, d_absorb, Ny, Nz, double);
+        ALLOC_3D(boundaryG->E_Ydir_OLD, Nx, d_absorb, Nz, double);
+        ALLOC_3D(boundaryG->E_Zdir_OLD, Nx, Ny, d_absorb, double);
+
+        ALLOC_3D(boundaryG->E_Xdir_OLD_ref, d_absorb, Ny, Nz_ref, double);
+        ALLOC_3D(boundaryG->E_Ydir_OLD_ref, Nx, d_absorb, Nz_ref, double);
+        ALLOC_3D(boundaryG->E_Zdir_OLD_ref, Nx, Ny, d_absorb,     double);
+    }
+    else if(boundary_sel == 3){
+
+        ALLOC_3D(boundaryG->DH_WAVE, Nx, Ny, Nz, double);
+        ALLOC_3D(boundaryG->DH_WAVE_ref, Nx, Ny, Nz_ref, double);
+
+        ALLOC_1D(boundaryG->F1x, Nx/2, double);
+        ALLOC_1D(boundaryG->F1y, Ny/2, double);
+        ALLOC_1D(boundaryG->F1z, Nz/2, double);
+        ALLOC_1D(boundaryG->F2x, Nx/2, double);
+        ALLOC_1D(boundaryG->F2y, Ny/2, double);
+        ALLOC_1D(boundaryG->F2z, Nz/2, double);
+        ALLOC_1D(boundaryG->Cx, Nx/2, double);
+        ALLOC_1D(boundaryG->Cy, Ny/2, double);
+        ALLOC_1D(boundaryG->Cz, Nz/2, double);
+        
+        init_UPML_parameters(   gridCfg, boundaryG);
+
+    }
+   
+}
+
+/*Apply boundary on time evolution*/
+void advance_boundary(gridConfiguration *gridCfg, systemGrid *G, boundaryGrid *boundaryG){
+
+    if(boundary_sel == 1){
+
+        apply_absorber( gridCfg, G, boundaryG);
+        apply_absorber_ref(gridCfg, G, boundaryG);
+
+    }
+    else if (boundary_sel == 2){
+        
+        abc_Mur_1st(gridCfg,"x1x2y1y2z1z2", G, boundaryG);
+        abc_Mur_saveOldE_xdir(gridCfg, G, boundaryG);
+        abc_Mur_saveOldE_ydir(gridCfg, G, boundaryG);
+        abc_Mur_saveOldE_zdir(gridCfg, G, boundaryG);
+        
+        abc_Mur_1st_ref(gridCfg, G, boundaryG);
+        abc_Mur_saveOldE_ref_xdir(gridCfg, G, boundaryG);
+        abc_Mur_saveOldE_ref_ydir(gridCfg, G, boundaryG);
+        abc_Mur_saveOldE_ref_zdir(gridCfg, G, boundaryG);
+        
+    }
+    else if(boundary_sel == 3){
+        
+    }
+
+}
+
 /*Section for simple Absorbing boundary conditions*/
 int apply_absorber( gridConfiguration *gridCfg, 
                     systemGrid *G, 
@@ -31,6 +98,7 @@ int apply_absorber( gridConfiguration *gridCfg,
     }
     // z2 absorber: z=d_absorb...Nz
 #pragma omp parallel for default(shared) private(ii,jj,kk,damp)
+
     for (ii=2 ; ii < Nx-2 ; ii+=2) {
         for (jj=2 ; jj < Ny-2 ; jj+=2) {
             for (kk = (Nz - d_absorb) ; kk < Nz-2 ; kk+=2) {      //Nz-d_absorb-2 ???
@@ -46,9 +114,9 @@ int apply_absorber( gridConfiguration *gridCfg,
     }      
     // x1 absorber: x=0...d_absorb
 #pragma omp parallel for default(shared) private(ii,jj,kk,damp)
-    for (jj=2 ; jj < Ny-2 ; jj+=2) {
-        for (kk=2 ; kk < Nz-2 ; kk+=2) {
-            for (ii=2 ; ii < d_absorb-2 ; ii+=2) {
+    for (ii=2 ; ii < d_absorb-2 ; ii+=2){
+        for (jj=2 ; jj < Ny-2 ; jj+=2) {
+            for (kk=2 ; kk < Nz-2 ; kk+=2) {
                 damp = ((double)ii-(double)d_absorb)/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
@@ -60,9 +128,9 @@ int apply_absorber( gridConfiguration *gridCfg,
     }
     // x2 absorber: x=d_absorb...Nx
 #pragma omp parallel for default(shared) private(ii,jj,kk,damp)
-    for (jj=2 ; jj < Ny-2 ; jj+=2) {
-        for (kk=2 ; kk < Nz-2 ; kk+=2) {  
-            for (ii = (Nx - d_absorb) ; ii < Nx-2 ; ii+=2) {    //Nx-d_absorb-2 ???
+    for (ii = (Nx - d_absorb) ; ii < Nx-2 ; ii+=2){ //Nx-d_absorb-2 ???
+        for (jj=2 ; jj < Ny-2 ; jj+=2) {
+            for (kk=2 ; kk < Nz-2 ; kk+=2) {    
                 damp = ((double)ii-((double)Nx-(double)d_absorb))/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
@@ -75,8 +143,8 @@ int apply_absorber( gridConfiguration *gridCfg,
     // y1 absorber: y=0...d_absorb
 #pragma omp parallel for default(shared) private(ii,jj,kk,damp)
     for (ii=2 ; ii < Nx-2 ; ii+=2) {
-        for (kk=2 ; kk < Nz-2 ; kk+=2) {
-            for (jj=2 ; jj < d_absorb-2 ; jj+=2) {
+        for (jj=2 ; jj < d_absorb-2 ; jj+=2) {
+            for (kk=2 ; kk < Nz-2 ; kk+=2) {
                 damp = ((double)jj-(double)d_absorb)/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
@@ -89,8 +157,8 @@ int apply_absorber( gridConfiguration *gridCfg,
     // y2 absorber: y=d_absorb...Ny
 #pragma omp parallel for default(shared) private(ii,jj,kk,damp)
     for (ii=2 ; ii < Nx-2 ; ii+=2) {
-        for (kk=2 ; kk < Nz-2 ; kk+=2) {
-            for (jj = (Ny - d_absorb) ; jj < Ny-2 ; jj+=2) {  //Ny-d_absorb-2 ???
+        for (jj = (Ny - d_absorb) ; jj < Ny-2 ; jj+=2) { //Ny-d_absorb-2 ???
+            for (kk=2 ; kk < Nz-2 ; kk+=2) {  
                 damp = ((double)jj-((double)Ny-(double)d_absorb))/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
@@ -208,7 +276,6 @@ int abc_Mur_saveOldE_xdir(  gridConfiguration *gridCfg,
                             systemGrid *G, 
                             boundaryGrid *boundaryG ) {
 //{{{
-
     // Ex: odd-even-even
     // Ey: even-odd-even
     // Ez: even-even-odd
@@ -247,7 +314,6 @@ int abc_Mur_saveOldE_xdir(  gridConfiguration *gridCfg,
     }
  
     return EXIT_SUCCESS;
-
 }//}}}
 
 int abc_Mur_saveOldE_ydir(  gridConfiguration *gridCfg, 
@@ -797,59 +863,6 @@ int abc_Mur_1st_ref(    gridConfiguration *gridCfg,
 
 } //}}}
 
-/*Initialize boundary conditions*/
-void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
-
-    if(boundary_sel == 1){
-
-        eco = 10./(double)(period);
-
-    }
-    else if (boundary_sel == 2){
-
-        ALLOC_3D(boundaryG->E_Xdir_OLD, d_absorb, Ny, Nz, double);
-        ALLOC_3D(boundaryG->E_Ydir_OLD, Nx, d_absorb, Nz, double);
-        ALLOC_3D(boundaryG->E_Zdir_OLD, Nx, Ny, d_absorb, double);
-
-        ALLOC_3D(boundaryG->E_Xdir_OLD_ref, d_absorb, Ny, Nz_ref, double);
-        ALLOC_3D(boundaryG->E_Ydir_OLD_ref, Nx, d_absorb, Nz_ref, double);
-        ALLOC_3D(boundaryG->E_Zdir_OLD_ref, Nx, Ny, d_absorb, double);
-
-    }
-    else if(boundary_sel == 3){
-        
-    }
-    
-}
-
-/*Apply boundary on time evolution*/
-void advance_boundary(gridConfiguration *gridCfg, systemGrid *G, boundaryGrid *boundaryG){
-
-    if(boundary_sel == 1){
-
-        apply_absorber( gridCfg, G, boundaryG);
-        apply_absorber_ref(gridCfg, G, boundaryG);
-
-    }
-    else if (boundary_sel == 2){
-
-        abc_Mur_saveOldE_xdir(gridCfg, G, boundaryG);
-        abc_Mur_saveOldE_ydir(gridCfg, G, boundaryG);
-        abc_Mur_saveOldE_zdir(gridCfg, G, boundaryG);
-        abc_Mur_1st(gridCfg,"x1x2y1y2z1z2", G, boundaryG);
-
-        abc_Mur_saveOldE_ref_xdir(gridCfg, G, boundaryG);
-        abc_Mur_saveOldE_ref_ydir(gridCfg, G, boundaryG);
-        abc_Mur_saveOldE_ref_zdir(gridCfg, G, boundaryG);
-        abc_Mur_1st_ref(gridCfg, G, boundaryG);
-
-    }
-    else if(boundary_sel == 3){
-        
-    }
-
-}
-
 int apply_numerical_viscosity( gridConfiguration *gridCfg,
                                systemGrid *G ) {
     //{{{
@@ -880,3 +893,85 @@ int apply_numerical_viscosity( gridConfiguration *gridCfg,
 
     return EXIT_SUCCESS;
 }//}}}
+
+/*UPML functions*/
+double sigma(int pml_size, double nn, int m, double ds){
+
+    double sig, sig_max, R_0;
+
+    R_0 = pow(10,-6);
+    sig_max = -(m+1)*log( R_0 )/(2*pml_size*ds);
+
+    sig = pow( (nn) /(pml_size), m) * sig_max;
+
+    return sig;  
+}
+
+void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG){
+
+    int ii, jj, kk, count;
+    double sig, kx, ky, kz;
+    
+    count = d_absorb;
+    kx = 1;
+    ky = 1;
+    kz = 1;
+
+    for ( ii=1 ; ii < (Nx/2)-1 ; ii+=1 ) {
+        if(ii <= d_absorb + 1){
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1x(ii) = (2*kx) + (sig*dt);
+            F2x(ii) = (2*kx) - (sig*dt);
+            Cx(ii) = F2x(ii)/F1x(ii);
+
+            count -= 1;
+        }else if( ii >= (Nx/2) - d_absorb - 2){
+            count += 1; 
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1x(ii) = (2*kx) + (sig*dt);
+            F2x(ii) = (2*kx) - (sig*dt);
+            Cx(ii) = F2x(ii)/F1x(ii);  
+        }
+    }
+
+    for ( jj=1 ; jj < (Ny/2)-1 ; jj+=1 ) {
+        if(jj <= d_absorb + 1){
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1y(jj) = (2*ky) + (sig*dt);
+            F2y(jj) = (2*ky) - (sig*dt);
+            Cy(jj) = F2y(jj)/F1y(jj);
+
+            count -= 1;
+        }else if( jj >= (Ny/2) - d_absorb - 2){
+            count += 1; 
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1y(jj) = (2*ky) + (sig*dt);
+            F2y(jj) = (2*ky) - (sig*dt);
+            Cy(jj) = F2y(jj)/F1y(jj);  
+        }
+    }
+
+    for ( kk=1 ; kk < (Nz/2)-1 ; kk+=1 ) {
+        if(kk <= d_absorb + 1){
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1z(kk) = (2*kz) + (sig*dt);
+            F2z(kk) = (2*kz) - (sig*dt);
+            Cz(kk) = F2z(kk)/F1z(kk);
+
+            count -= 1;
+        }else if( kk >= (Nz/2) - d_absorb - 2){
+            count += 1; 
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1z(kk) = (2*kz) + (sig*dt);
+            F2z(kk) = (2*kz) - (sig*dt);
+            Cz(kk) = F2z(kk)/F1z(kk); 
+        }
+    }
+
+}

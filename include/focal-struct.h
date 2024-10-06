@@ -37,10 +37,13 @@ typedef struct boundaryGrid{            /*Store grid value for the boundary vari
     
     /*Mur boundary*/
     *E_Xdir_OLD, *E_Ydir_OLD, *E_Zdir_OLD,
-    *E_Xdir_OLD_ref, *E_Ydir_OLD_ref, *E_Zdir_OLD_ref;
+    *E_Xdir_OLD_ref, *E_Ydir_OLD_ref, *E_Zdir_OLD_ref,
 
-    /*PML boundary*/
-
+    /*UPML boundary*/
+    *DH_WAVE, *DH_WAVE_ref,
+    *F1x, *F1y, *F1z,
+    *F2x, *F2y, *F2z,
+    *Cx, *Cy, *Cz;
 } boundaryGrid;
 
 typedef struct beamAntennaConfiguration {   /*Antenna configuration variables*/
@@ -61,7 +64,7 @@ typedef struct antennaDetector{
     int 
         antDetect_1D, 
         detAnt_01_zpos, detAnt_02_zpos,
-        detAnt_03_zpos,detAnt_04_zpos,
+        detAnt_03_zpos, detAnt_04_zpos,
         detAnt_01_ypos;
     double
         *detAnt_01_fields,
@@ -92,12 +95,5 @@ enum FieldID {
     FIELD_03,
     FIELD_04
 };
-
-/*typedef struct pmlBoundary{
-    double  *EBx, *EBy, *EBz, *EB,
-            *bx, *by, *bz,
-            *cx, *cy, *cz;
-} pmlBoundary;
-*/
 
 #endif

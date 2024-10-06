@@ -11,6 +11,13 @@
 #include "macros-grid.h"
 
 //functions in initialize grid
+void control_gridInit(  gridConfiguration *gridCfg, 
+                        systemGrid *G, 
+                        saveData *saveDCfg, 
+                        boundaryGrid *boundaryG,
+                        beamAntennaConfiguration *beamAnt,
+                        antennaDetector *antDetect );
+
 void gridConfInit(  gridConfiguration *gridCfg, 
                     saveData *saveDCfg, 
                     beamAntennaConfiguration *beamAnt,
@@ -23,17 +30,13 @@ void write_JSON_onStruct(   gridConfiguration *gridCfg,
                             beamAntennaConfiguration *beamAnt,
                             antennaDetector *antDetect );
 
-void control_gridInit(  gridConfiguration *gridCfg, 
-                        systemGrid *G, 
-                        saveData *saveDCfg, 
-                        boundaryGrid *boundaryG,
-                        beamAntennaConfiguration *beamAnt,
-                        antennaDetector *antDetect );
+void allocateMemory_structs( gridConfiguration *gridCfg,
+                             systemGrid *G, 
+                             saveData *saveDCfg, 
+                             beamAntennaConfiguration *beamAnt,
+                             antennaDetector *antDetect );
 
 void print_systemConfiguration(gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt );
-
-void allocate_data2save( gridConfiguration *gridCfg, saveData *saveDCfg);
-void allocate_timetraces( gridConfiguration *gridCfg, saveData *saveDCfg );
 
 int t_end_s(gridConfiguration *gridCfg);
 

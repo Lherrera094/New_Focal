@@ -17,9 +17,9 @@
 #define B0_valueG(gridCfg)      gridCfg->B0_value
 #define boundaryG(gridCfg)      gridCfg->boundary
 
-#define Nx                      NxG(gridCfg)             
-#define Ny                      NyG(gridCfg)           
-#define Nz                      NzG(gridCfg)  
+#define Nx                      NxG(gridCfg)            
+#define Ny                      NyG(gridCfg)          
+#define Nz                      NzG(gridCfg)
 #define Nz_ref                  Nz_refG(gridCfg)  
 #define d_absorb                d_absorbG(gridCfg)
 #define t_end                   t_endG(gridCfg)
@@ -112,6 +112,30 @@
 #define E_Xdir_OLD_ref(i,j,k)                   E_Xdir_OLD_ref_G(boundaryG,i,j,k)
 #define E_Ydir_OLD_ref(i,j,k)                   E_Ydir_OLD_ref_G(boundaryG,i,j,k)
 #define E_Zdir_OLD_ref(i,j,k)                   E_Zdir_OLD_ref_G(boundaryG,i,j,k)
+
+/*Macros for UPML boundary layer*/
+#define DH_WAVEstr(PMLG,i,j,k)                  boundaryG->DH_WAVE[((i) * (Ny) + j) * (Nz) + k]
+#define F1xStr(PMLG,i)                          boundaryG->F1x[i]
+#define F1yStr(PMLG,j)                          boundaryG->F1y[j]
+#define F1zStr(PMLG,k)                          boundaryG->F1z[k]
+#define F2xStr(PMLG,i)                          boundaryG->F2x[i]
+#define F2yStr(PMLG,j)                          boundaryG->F2y[j]
+#define F2zStr(PMLG,k)                          boundaryG->F2z[k]
+#define CxStr(PMLG,i)                           boundaryG->Cx[i]
+#define CyStr(PMLG,j)                           boundaryG->Cy[j]
+#define CzStr(PMLG,k)                           boundaryG->Cz[k]
+
+#define DH_WAVE(i,j,k)                          DH_WAVEstr(PMLG,i,j,k)
+#define F1x(i)                                  F1xStr(PMLG,i) 
+#define F1y(j)                                  F1yStr(PMLG,j)
+#define F1z(k)                                  F1zStr(PMLG,k)
+#define F2x(i)                                  F2xStr(PMLG,i)
+#define F2y(j)                                  F2yStr(PMLG,j) 
+#define F2z(k)                                  F2zStr(PMLG,k)
+#define Cx(i)                                   CxStr(PMLG,i)
+#define Cy(j)                                   CyStr(PMLG,j)
+#define Cz(k)                                   CzStr(PMLG,k)
+
 
 /*Macros for Antenna detector*/
 #define DET_ANT_ACCES(antDetect, id, i, j)  \
