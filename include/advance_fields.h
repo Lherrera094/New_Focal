@@ -10,6 +10,7 @@
 #include "focal-struct.h"
 #include "macros-grid.h"
 #include "constants.h"
+#include "UPML_module.h"
 
 void advance_fields( gridConfiguration *gridCfg, 
                      systemGrid *G,
