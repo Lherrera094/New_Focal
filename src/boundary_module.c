@@ -32,6 +32,11 @@ void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
         ALLOC_1D(boundaryG->Cx, Nx/2, double);
         ALLOC_1D(boundaryG->Cy, Ny/2, double);
         ALLOC_1D(boundaryG->Cz, Nz/2, double);
+
+        /*UPML parameters for reference*/
+        ALLOC_1D(boundaryG->F1zr, Nz_ref/2, double);
+        ALLOC_1D(boundaryG->F2zr, Nz_ref/2, double);
+        ALLOC_1D(boundaryG->Czr, Nz_ref/2, double);
         
         init_UPML_parameters(   gridCfg, boundaryG);
 
@@ -59,9 +64,6 @@ void advance_boundary(gridConfiguration *gridCfg, systemGrid *G, boundaryGrid *b
         abc_Mur_saveOldE_ref_xdir(gridCfg, G, boundaryG);
         abc_Mur_saveOldE_ref_ydir(gridCfg, G, boundaryG);
         abc_Mur_saveOldE_ref_zdir(gridCfg, G, boundaryG);
-        
-    }
-    else if(boundary_sel == 3){
         
     }
 
@@ -206,9 +208,9 @@ int apply_absorber_ref( gridConfiguration *gridCfg,
                 damp = ((double)kk-((double)Nz_ref-(double)d_absorb))/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
-                EB_WAVE(ii+1,jj  ,kk  ) *= damp;
-                EB_WAVE(ii  ,jj+1,kk  ) *= damp;
-                EB_WAVE(ii  ,jj  ,kk+1) *= damp;
+                EB_WAVE_ref(ii+1,jj  ,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj+1,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj  ,kk+1) *= damp;
             }
         }
     }      
@@ -220,9 +222,9 @@ int apply_absorber_ref( gridConfiguration *gridCfg,
                 damp = ((double)ii-(double)d_absorb)/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
-                EB_WAVE(ii+1,jj  ,kk  ) *= damp;
-                EB_WAVE(ii  ,jj+1,kk  ) *= damp;
-                EB_WAVE(ii  ,jj  ,kk+1) *= damp;
+                EB_WAVE_ref(ii+1,jj  ,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj+1,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj  ,kk+1) *= damp;
             }
         }
     }
@@ -234,9 +236,9 @@ int apply_absorber_ref( gridConfiguration *gridCfg,
                 damp = ((double)ii-((double)Nx-(double)d_absorb))/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
-                EB_WAVE(ii+1,jj  ,kk  ) *= damp;
-                EB_WAVE(ii  ,jj+1,kk  ) *= damp;
-                EB_WAVE(ii  ,jj  ,kk+1) *= damp;
+                EB_WAVE_ref(ii+1,jj  ,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj+1,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj  ,kk+1) *= damp;
             }
         }
     }
@@ -248,9 +250,9 @@ int apply_absorber_ref( gridConfiguration *gridCfg,
                 damp = ((double)jj-(double)d_absorb)/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
-                EB_WAVE(ii+1,jj  ,kk  ) *= damp;
-                EB_WAVE(ii  ,jj+1,kk  ) *= damp;
-                EB_WAVE(ii  ,jj  ,kk+1) *= damp;
+                EB_WAVE_ref(ii+1,jj  ,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj+1,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj  ,kk+1) *= damp;
             }
         }
     }
@@ -262,9 +264,9 @@ int apply_absorber_ref( gridConfiguration *gridCfg,
                 damp = ((double)jj-((double)Ny-(double)d_absorb))/(double)d_absorb;
                 damp = ABSORBER_DAMPING(eco,damp);
 
-                EB_WAVE(ii+1,jj  ,kk  ) *= damp;
-                EB_WAVE(ii  ,jj+1,kk  ) *= damp;
-                EB_WAVE(ii  ,jj  ,kk+1) *= damp;
+                EB_WAVE_ref(ii+1,jj  ,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj+1,kk  ) *= damp;
+                EB_WAVE_ref(ii  ,jj  ,kk+1) *= damp;
             }
         }
     }
@@ -971,6 +973,25 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
             F1z(kk) = (2*kz) + (sig*dt);
             F2z(kk) = (2*kz) - (sig*dt);
             Cz(kk) = F2z(kk)/F1z(kk); 
+        }
+    }
+
+    for ( kk=1 ; kk < (Nz_ref/2)-1 ; kk+=1 ) {
+        if(kk <= d_absorb + 1){
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1zr(kk) = (2*kz) + (sig*dt);
+            F2zr(kk) = (2*kz) - (sig*dt);
+            Czr(kk) = F2zr(kk)/F1zr(kk);
+
+            count -= 1;
+        }else if( kk >= (Nz_ref/2) - d_absorb - 2){
+            count += 1; 
+
+            sig = sigma(d_absorb, count, 4, dx);
+            F1zr(kk) = (2*kz) + (sig*dt);
+            F2zr(kk) = (2*kz) - (sig*dt);
+            Czr(kk) = F2zr(kk)/F1zr(kk); 
         }
     }
 

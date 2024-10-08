@@ -24,9 +24,11 @@ void advance_fields( gridConfiguration *gridCfg,
 
         //Advance wave magnetic field
         advance_B_PML(  gridCfg, G, boundaryG );
+        //advance_Bref_PML(   gridCfg, G, boundaryG );
 
         //Advance wave electric field
         advance_E_PML(  gridCfg, G, boundaryG );
+        //advance_Eref_PML(  gridCfg, G, boundaryG );
 
     }
 }
@@ -271,6 +273,49 @@ int advance_B_PML(  gridConfiguration *gridCfg,
     return EXIT_SUCCESS;
 }//}}}
 
+int advance_Bref_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG ) {
+//{{{      
+
+    size_t
+        ii, jj, kk;
+
+    UPML_Bref_faces(  gridCfg, G, boundaryG );
+    UPML_Bref_corners(gridCfg, G, boundaryG);
+    UPML_Bref_edges(  gridCfg, G, boundaryG );
+
+
+/*Core grid advancing*/
+#pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
+    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 4 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
+                // -dBx/dt = dEz/dy - dEy/dz
+                EB_WAVE_ref(ii  ,jj+1,kk+1) += -1. * (dt/dx) * (
+                                        +EB_WAVE_ref(ii  ,jj+2,kk+1) - EB_WAVE_ref(ii  ,jj  ,kk+1)
+                                        -EB_WAVE_ref(ii  ,jj+1,kk+2) + EB_WAVE_ref(ii  ,jj+1,kk  )
+                                        );
+
+                // -dBy/dt = dEx/dz - dEz/dx
+                EB_WAVE_ref(ii+1,jj  ,kk+1) += -1. * (dt/dx) * (
+                                        +EB_WAVE_ref(ii+1,jj  ,kk+2) - EB_WAVE_ref(ii+1,jj  ,kk  )
+                                        -EB_WAVE_ref(ii+2,jj  ,kk+1) + EB_WAVE_ref(ii  ,jj  ,kk+1)
+                                        );
+
+                // -dBz/dt = dEy/dx - dEx/dy
+                EB_WAVE_ref(ii+1,jj+1,kk  ) += -1. * (dt/dx) * (
+                                        +EB_WAVE_ref(ii+2,jj+1,kk  ) - EB_WAVE_ref(ii  ,jj+1,kk  )
+                                        -EB_WAVE_ref(ii+1,jj+2,kk  ) + EB_WAVE_ref(ii+1,jj  ,kk  )
+                                        );
+                
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;
+}//}}}
+
 int advance_E_PML(  gridConfiguration *gridCfg, 
                     systemGrid *G,
                     boundaryGrid *boundaryG ){
@@ -304,6 +349,46 @@ int advance_E_PML(  gridConfiguration *gridCfg,
                                         +EB_WAVE(ii+1,jj  ,kk+1) - EB_WAVE(ii-1,jj  ,kk+1)
                                         -EB_WAVE(ii  ,jj+1,kk+1) + EB_WAVE(ii  ,jj-1,kk+1)
                                         ) - dt * J_B0(ii  ,jj  ,kk+1);
+            }
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int advance_Eref_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG ){
+//{{{
+    size_t
+        ii, jj, kk;
+
+    UPML_Eref_faces(  gridCfg, G, boundaryG );
+    UPML_Eref_corners(gridCfg, G, boundaryG );
+    UPML_Eref_edges(  gridCfg, G, boundaryG );
+
+/*Core grid advancing*/
+#pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
+    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 4 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
+
+                EB_WAVE_ref(ii+1,jj  ,kk  ) += dt/dx * (
+                                        +EB_WAVE_ref(ii+1,jj+1,kk  ) - EB_WAVE_ref(ii+1,jj-1,kk  )
+                                        -EB_WAVE_ref(ii+1,jj  ,kk+1) + EB_WAVE_ref(ii+1,jj  ,kk-1)
+                                        );
+
+                // dEy/dt = (dBx/dz - dBz/dx)
+                EB_WAVE_ref(ii  ,jj+1,kk  ) += dt/dx * (
+                                        +EB_WAVE_ref(ii  ,jj+1,kk+1) - EB_WAVE_ref(ii  ,jj+1,kk-1)
+                                        -EB_WAVE_ref(ii+1,jj+1,kk  ) + EB_WAVE_ref(ii-1,jj+1,kk  )
+                                        );
+
+                // dEz/dt = (dBy/dx - dBx/dy)
+                EB_WAVE_ref(ii  ,jj  ,kk+1) += dt/dx * (
+                                        +EB_WAVE_ref(ii+1,jj  ,kk+1) - EB_WAVE_ref(ii-1,jj  ,kk+1)
+                                        -EB_WAVE_ref(ii  ,jj+1,kk+1) + EB_WAVE_ref(ii  ,jj-1,kk+1)
+                                        );
             }
         }
     }

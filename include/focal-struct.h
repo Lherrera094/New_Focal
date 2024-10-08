@@ -43,7 +43,9 @@ typedef struct boundaryGrid{            /*Store grid value for the boundary vari
     *DH_WAVE, *DH_WAVE_ref,
     *F1x, *F1y, *F1z,
     *F2x, *F2y, *F2z,
-    *Cx, *Cy, *Cz;
+    *Cx, *Cy, *Cz,
+    *F1zr, *F2zr,
+    *Czr;
 } boundaryGrid;
 
 typedef struct beamAntennaConfiguration {   /*Antenna configuration variables*/

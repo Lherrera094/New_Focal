@@ -115,6 +115,7 @@
 
 /*Macros for UPML boundary layer*/
 #define DH_WAVEstr(PMLG,i,j,k)                  boundaryG->DH_WAVE[((i) * (Ny) + j) * (Nz) + k]
+#define DH_WAVE_refStr(PMLG,i,j,k)              boundaryG->DH_WAVE_ref[((i) * (Ny) + j) * (Nz_ref) + k]
 #define F1xStr(PMLG,i)                          boundaryG->F1x[i]
 #define F1yStr(PMLG,j)                          boundaryG->F1y[j]
 #define F1zStr(PMLG,k)                          boundaryG->F1z[k]
@@ -125,7 +126,12 @@
 #define CyStr(PMLG,j)                           boundaryG->Cy[j]
 #define CzStr(PMLG,k)                           boundaryG->Cz[k]
 
+#define F1zrStr(PMLG,k)                         boundaryG->F1zr[k]
+#define F2zrStr(PMLG,k)                         boundaryG->F2zr[k]
+#define CzrStr(PMLG,k)                          boundaryG->Czr[k]
+
 #define DH_WAVE(i,j,k)                          DH_WAVEstr(PMLG,i,j,k)
+#define DH_WAVE_ref(i,j,k)                      DH_WAVE_refStr(PMLG,i,j,k)              
 #define F1x(i)                                  F1xStr(PMLG,i) 
 #define F1y(j)                                  F1yStr(PMLG,j)
 #define F1z(k)                                  F1zStr(PMLG,k)
@@ -135,6 +141,10 @@
 #define Cx(i)                                   CxStr(PMLG,i)
 #define Cy(j)                                   CyStr(PMLG,j)
 #define Cz(k)                                   CzStr(PMLG,k)
+
+#define F1zr(k)                                 F1zrStr(PMLG,k)
+#define F2zr(k)                                 F2zrStr(PMLG,k)
+#define Czr(k)                                  CzrStr(PMLG,k)
 
 
 /*Macros for Antenna detector*/
