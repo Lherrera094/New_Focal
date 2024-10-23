@@ -19,7 +19,8 @@ void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
         ALLOC_3D(boundaryG->E_Zdir_OLD_ref, Nx, Ny, d_absorb,     double);
     }
     else if(boundary_sel == 3){
-
+        
+        /*Initialize UPML parameters*/
         ALLOC_3D(boundaryG->DH_WAVE, Nx, Ny, Nz, double);
         ALLOC_3D(boundaryG->DH_WAVE_ref, Nx, Ny, Nz_ref, double);
 
@@ -33,7 +34,7 @@ void init_boundary(gridConfiguration *gridCfg, boundaryGrid *boundaryG){
         ALLOC_1D(boundaryG->Cy, Ny/2, double);
         ALLOC_1D(boundaryG->Cz, Nz/2, double);
 
-        /*UPML parameters for reference*/
+        /*UPML ref parameters*/
         ALLOC_1D(boundaryG->F1zr, Nz_ref/2, double);
         ALLOC_1D(boundaryG->F2zr, Nz_ref/2, double);
         ALLOC_1D(boundaryG->Czr, Nz_ref/2, double);
@@ -52,8 +53,7 @@ void advance_boundary(gridConfiguration *gridCfg, systemGrid *G, boundaryGrid *b
         apply_absorber( gridCfg, G, boundaryG);
         apply_absorber_ref(gridCfg, G, boundaryG);
 
-    }
-    else if (boundary_sel == 2){
+    }else if (boundary_sel == 2){
         
         abc_Mur_1st(gridCfg,"x1x2y1y2z1z2", G, boundaryG);
         abc_Mur_saveOldE_xdir(gridCfg, G, boundaryG);
@@ -900,10 +900,11 @@ int apply_numerical_viscosity( gridConfiguration *gridCfg,
 double sigma(int pml_size, double nn, int m, double ds){
 
     double sig, sig_max, R_0;
+      
+    //R_0 = pow(10,-12);       /*If d = 40*/ 
 
     R_0 = pow(10,-6);
-    sig_max = -(m+1)*log( R_0 )/(2*pml_size*ds);
-
+    sig_max = -(m+1)*log( R_0 )/(2*ds*pml_size);
     sig = pow( (nn) /(pml_size), m) * sig_max;
 
     return sig;  
@@ -914,84 +915,112 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
     int ii, jj, kk, count;
     double sig, kx, ky, kz;
     
-    count = d_absorb;
+    count = (d_absorb-2)/2;
     kx = 1;
     ky = 1;
     kz = 1;
 
-    for ( ii=1 ; ii < (Nx/2)-1 ; ii+=1 ) {
-        if(ii <= d_absorb + 1){
+    for ( ii=2 ; ii < Nx-2 ; ii+=2 ) {
+        if(ii < d_absorb + 2){
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1x(ii) = (2*kx) + (sig*dt);
-            F2x(ii) = (2*kx) - (sig*dt);
-            Cx(ii) = F2x(ii)/F1x(ii);
+            sig = sigma( (d_absorb-2)/2, count, 4, dx);
+            F1x(ii/2) = (2*kx) - (sig*dt);
+            F2x(ii/2) = (2*kx) + (sig*dt);
+            Cx(ii/2) = F1x(ii/2)/F2x(ii/2);
 
             count -= 1;
-        }else if( ii >= (Nx/2) - d_absorb - 2){
+        }else if( ii >= Nx - d_absorb - 2){
             count += 1; 
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1x(ii) = (2*kx) + (sig*dt);
-            F2x(ii) = (2*kx) - (sig*dt);
-            Cx(ii) = F2x(ii)/F1x(ii);  
+            sig = sigma( (d_absorb-2)/2, count, 4, dx);
+            F1x(ii/2) = (2*kx) - (sig*dt);
+            F2x(ii/2) = (2*kx) + (sig*dt);
+            Cx(ii/2) = F1x(ii/2)/F2x(ii/2);  
+        }else{
+
+            sig = 0;
+            F1x(ii/2) = (2*kx) - (sig*dt);
+            F2x(ii/2) = (2*kx) + (sig*dt);
+            Cx(ii/2) = F1x(ii/2)/F2x(ii/2);
+        }
+        //printf("C(%d) = %.5f \n", ii/2, Cx(ii/2) );
+    }
+    //exit(-1);
+
+    count = (d_absorb-2)/2;
+    for ( jj=2 ; jj < Ny-2 ; jj+=2 ) {
+        if(jj < d_absorb + 2){
+
+            sig = sigma( (d_absorb-2)/2, count, 4, dx);
+            F1y(jj/2) = (2*ky) - (sig*dt);
+            F2y(jj/2) = (2*ky) + (sig*dt);
+            Cy(jj/2) = F1y(jj/2)/F2y(jj/2);
+
+            count -= 1;
+        }else if( jj >= Ny - d_absorb - 2){
+            count += 1; 
+
+            sig = sigma((d_absorb-2)/2, count, 4, dx);
+            F1y(jj/2) = (2*ky) - (sig*dt);
+            F2y(jj/2) = (2*ky) + (sig*dt);
+            Cy(jj/2) = F1y(jj/2)/F2y(jj/2); 
+        }else{
+
+            sig = 0;
+            F1y(jj/2) = (2*ky) - (sig*dt);
+            F2y(jj/2) = (2*ky) + (sig*dt);
+            Cy(jj/2) = F1y(jj/2)/F2y(jj/2);
         }
     }
 
-    for ( jj=1 ; jj < (Ny/2)-1 ; jj+=1 ) {
-        if(jj <= d_absorb + 1){
+    count = (d_absorb-2)/2;
+    for ( kk=2 ; kk < Nz-2 ; kk+=2 ) {
+        if(kk < d_absorb + 2){
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1y(jj) = (2*ky) + (sig*dt);
-            F2y(jj) = (2*ky) - (sig*dt);
-            Cy(jj) = F2y(jj)/F1y(jj);
+            sig = sigma((d_absorb-2)/2, count, 4, dx);
+            F1z(kk/2) = (2*kz) - (sig*dt);
+            F2z(kk/2) = (2*kz) + (sig*dt);
+            Cz(kk/2) = F1z(kk/2)/F2z(kk/2);
 
             count -= 1;
-        }else if( jj >= (Ny/2) - d_absorb - 2){
+        }else if( kk >= Nz - d_absorb - 2){
             count += 1; 
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1y(jj) = (2*ky) + (sig*dt);
-            F2y(jj) = (2*ky) - (sig*dt);
-            Cy(jj) = F2y(jj)/F1y(jj);  
+            sig = sigma((d_absorb-2)/2, count, 4, dx);
+            F1z(kk/2) = (2*kz) - (sig*dt);
+            F2z(kk/2) = (2*kz) + (sig*dt);
+            Cz(kk/2) = F1z(kk/2)/F2z(kk/2); 
+        }else{
+
+            sig = 0;
+            F1z(kk/2) = (2*kz) - (sig*dt);
+            F2z(kk/2) = (2*kz) + (sig*dt);
+            Cz(kk/2) = F1z(kk/2)/F2z(kk/2);
         }
     }
 
-    for ( kk=1 ; kk < (Nz/2)-1 ; kk+=1 ) {
-        if(kk <= d_absorb + 1){
+    count = (d_absorb-2)/2;
+    for ( kk=2 ; kk < Nz_ref-2 ; kk+=2 ) {
+        if(kk < d_absorb + 2){
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1z(kk) = (2*kz) + (sig*dt);
-            F2z(kk) = (2*kz) - (sig*dt);
-            Cz(kk) = F2z(kk)/F1z(kk);
-
-            count -= 1;
-        }else if( kk >= (Nz/2) - d_absorb - 2){
-            count += 1; 
-
-            sig = sigma(d_absorb, count, 4, dx);
-            F1z(kk) = (2*kz) + (sig*dt);
-            F2z(kk) = (2*kz) - (sig*dt);
-            Cz(kk) = F2z(kk)/F1z(kk); 
-        }
-    }
-
-    for ( kk=1 ; kk < (Nz_ref/2)-1 ; kk+=1 ) {
-        if(kk <= d_absorb + 1){
-
-            sig = sigma(d_absorb, count, 4, dx);
-            F1zr(kk) = (2*kz) + (sig*dt);
-            F2zr(kk) = (2*kz) - (sig*dt);
-            Czr(kk) = F2zr(kk)/F1zr(kk);
+            sig = sigma((d_absorb-2)/2, count, 4, dx);
+            F1zr(kk/2) = (2*kz) - (sig*dt);
+            F2zr(kk/2) = (2*kz) + (sig*dt);
+            Czr(kk/2) = F1zr(kk/2)/F2zr(kk/2);
 
             count -= 1;
-        }else if( kk >= (Nz_ref/2) - d_absorb - 2){
+        }else if( kk >= Nz_ref - d_absorb - 2){
             count += 1; 
 
-            sig = sigma(d_absorb, count, 4, dx);
-            F1zr(kk) = (2*kz) + (sig*dt);
-            F2zr(kk) = (2*kz) - (sig*dt);
-            Czr(kk) = F2zr(kk)/F1zr(kk); 
+            sig = sigma((d_absorb-2)/2, count, 4, dx);
+            F1zr(kk/2) = (2*kz) - (sig*dt);
+            F2zr(kk/2) = (2*kz) + (sig*dt);
+            Czr(kk/2) = F1zr(kk/2)/F2zr(kk/2); 
+        }else{
+            sig = 0;
+            F1zr(kk/2) = (2*kz) - (sig*dt);
+            F2zr(kk/2) = (2*kz) + (sig*dt);
+            Czr(kk/2) = F1zr(kk/2)/F2zr(kk/2);
         }
     }
 

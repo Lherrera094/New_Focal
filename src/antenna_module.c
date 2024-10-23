@@ -276,7 +276,7 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
             for ( jj=2 ; jj < Ny ; jj+=2 ) {
                 // Ex
                 source  = sin( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);
-                EB_WAVE(ii+1,jj  ,ant_z  ) += source;
+                EB_WAVE_ref(ii+1,jj  ,ant_z  ) += source;
                 // Ey
                 //source  = sin(omega_t + antPhaseTerms[(ii/2)][(jj/2)] + M_PI/2.) * t_rise * antField_xy[(ii/2)][(jj/2)] ;
                 source  = cos( t_omega + antPhaseTerms(ii/2,jj/2) ) * t_rise * antField_xy(ii/2,jj/2);

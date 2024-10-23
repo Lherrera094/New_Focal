@@ -16,6 +16,7 @@ void control_power(     gridConfiguration *gridCfg,
                         powerCalcValues *powerValStr,
                         saveData *saveDCfg, 
                         beamAntennaConfiguration *beamAnt,
+                        codeDiagnostics *diagnostic,
                         int t_int );
 void compute_power( gridConfiguration *gridCfg, systemGrid *G, powerCalcValues *powerValStr, int t_int );
 double calc_poynt_4(    gridConfiguration *gridCfg,
@@ -33,5 +34,10 @@ void compute_timetraces(    gridConfiguration *gridCfg,
                             beamAntennaConfiguration *beamAnt,
                             powerCalcValues *powerValStr,
                             int t_int );
+
+void computeFullEnergy(gridConfiguration *gridCfg, 
+                        systemGrid *G,
+                        codeDiagnostics *diagnostic,
+                        int t_int);
 
 #endif

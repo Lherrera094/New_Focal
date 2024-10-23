@@ -208,6 +208,11 @@
 #define poynt_y2                                powerPoyY2S(powerValStr)                
 #define poynt_z1                                powerPoyZ1S(powerValStr)   
 #define poynt_z1_ref                            powerPoyZRS(powerValStr) 
-#define poynt_z2                                powerPoyZ2S(powerValStr)                
+#define poynt_z2                                powerPoyZ2S(powerValStr)  
+
+/*Diagnostics Structure*/
+#define TotalEstr(diagnostic, i)                diagnostic->E[i]
+
+#define E(i)                                    TotalEstr(diagnostic, i)
 
 #endif

@@ -24,11 +24,11 @@ void advance_fields( gridConfiguration *gridCfg,
 
         //Advance wave magnetic field
         advance_B_PML(  gridCfg, G, boundaryG );
-        //advance_Bref_PML(   gridCfg, G, boundaryG );
+        advance_Bref_PML(   gridCfg, G, boundaryG );
 
         //Advance wave electric field
         advance_E_PML(  gridCfg, G, boundaryG );
-        //advance_Eref_PML(  gridCfg, G, boundaryG );
+        advance_Eref_PML(  gridCfg, G, boundaryG );
 
     }
 }
@@ -99,9 +99,9 @@ int advance_B( gridConfiguration *gridCfg,
         ii, jj, kk;
 
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
-    for (ii=2 ; ii < Nx-2 ; ii+=2) {
-        for (jj=2 ; jj < Ny-2 ; jj+=2) {
-            for (kk=2 ; kk < Nz-2 ; kk+=2) {
+    for (ii=4 ; ii < Nx-2 ; ii+=2) {
+        for (jj=4 ; jj < Ny-2 ; jj+=2) {
+            for (kk=4 ; kk < Nz-2 ; kk+=2) {
                 // -dBx/dt = dEz/dy - dEy/dz
                 EB_WAVE(ii  ,jj+1,kk+1) += -1. * (dt/dx) * (
                                         +EB_WAVE(ii  ,jj+2,kk+1) - EB_WAVE(ii  ,jj  ,kk+1)
@@ -230,6 +230,8 @@ int advance_E_ref( gridConfiguration *gridCfg,
     return EXIT_SUCCESS;
 }//}}}
 
+
+/*UPML Functions*/
 int advance_B_PML(  gridConfiguration *gridCfg, 
                     systemGrid *G,
                     boundaryGrid *boundaryG ) {
@@ -237,17 +239,14 @@ int advance_B_PML(  gridConfiguration *gridCfg,
 
     size_t
         ii, jj, kk;
-
-    UPML_B_faces(  gridCfg, G, boundaryG );
-    UPML_B_corners(gridCfg, G, boundaryG);
-    UPML_B_edges(  gridCfg, G, boundaryG );
-
+    /*double
+        dxstore, dystore, dzstore;*/
 
 /*Core grid advancing*/
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
-    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
-        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
-            for (kk = d_absorb + 4 ; kk < Nz - d_absorb - 2 ; kk+=2) {
+    for (ii = d_absorb + 2 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 2 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 2 ; kk < Nz - d_absorb - 2 ; kk+=2) {
                 // -dBx/dt = dEz/dy - dEy/dz
                 EB_WAVE(ii  ,jj+1,kk+1) += -1. * (dt/dx) * (
                                         +EB_WAVE(ii  ,jj+2,kk+1) - EB_WAVE(ii  ,jj  ,kk+1)
@@ -265,10 +264,45 @@ int advance_B_PML(  gridConfiguration *gridCfg,
                                         +EB_WAVE(ii+2,jj+1,kk  ) - EB_WAVE(ii  ,jj+1,kk  )
                                         -EB_WAVE(ii+1,jj+2,kk  ) + EB_WAVE(ii+1,jj  ,kk  )
                                         );
+
+                // -dBx/dt = dEz/dy - dEy/dz
+                /*dxstore = DH_WAVE(ii  ,jj+1,kk+1);
+                DH_WAVE(ii  ,jj+1,kk+1) = Cy(jj/2)*DH_WAVE(ii  ,jj+1,kk+1) - 1.*( 2*dt/dx/F2y(jj/2) ) * (
+                                        +EB_WAVE(ii  ,jj+2,kk+1) - EB_WAVE(ii  ,jj  ,kk+1)
+                                        -EB_WAVE(ii  ,jj+1,kk+2) + EB_WAVE(ii  ,jj+1,kk  )
+                                        );
+
+                EB_WAVE(ii  ,jj+1,kk+1) = Cz(kk/2)*EB_WAVE(ii  ,jj+1,kk+1) + ( 1/F2z(kk/2) )*(
+                                        + F2x(ii/2)*DH_WAVE(ii  ,jj+1,kk+1) - F1x(ii/2)*dxstore 
+                                        );
+
+                // -dBy/dt = dEx/dz - dEz/dx
+                dystore = DH_WAVE(ii+1,jj  ,kk+1);
+                DH_WAVE(ii+1,jj  ,kk+1) = Cz(kk/2)*DH_WAVE(ii+1,jj  ,kk+1) - 1.*( 2*dt/dx/F2z(kk/2) ) * (
+                                        +EB_WAVE(ii+1,jj  ,kk+2) - EB_WAVE(ii+1,jj  ,kk  )
+                                        -EB_WAVE(ii+2,jj  ,kk+1) + EB_WAVE(ii  ,jj  ,kk+1)
+                                        );
+
+                EB_WAVE(ii+1,jj  ,kk+1) = Cx(ii/2)*EB_WAVE(ii+1,jj  ,kk+1) + ( 1/F2x(ii/2) )*(
+                                        + F2y(jj/2)*DH_WAVE(ii+1,jj  ,kk+1) - F1y(jj/2)*dystore);
+
+                // -dBz/dt = dEy/dx - dEx/dy
+                dzstore = DH_WAVE(ii+1,jj+1,kk  );
+                DH_WAVE(ii+1,jj+1,kk  ) = Cx(ii/2)*DH_WAVE(ii+1,jj+1,kk  ) - 1.*( 2*dt/dx/F2x(ii/2) ) * (
+                                        +EB_WAVE(ii+2,jj+1,kk  ) - EB_WAVE(ii  ,jj+1,kk  )
+                                        -EB_WAVE(ii+1,jj+2,kk  ) + EB_WAVE(ii+1,jj  ,kk  )
+                                        );
+
+                EB_WAVE(ii+1,jj+1,kk  ) = Cy(jj/2)*EB_WAVE(ii+1,jj+1,kk  ) + ( 1/F2y(jj/2) )*(
+                                        + F2z(kk/2)*DH_WAVE(ii+1,jj+1,kk  ) - F1z(kk/2)*dzstore);*/
                 
             }
         }
     }
+
+    UPML_B_faces(  gridCfg, G, boundaryG );
+    UPML_B_corners(gridCfg, G, boundaryG );
+    UPML_B_edges(  gridCfg, G, boundaryG );
 
     return EXIT_SUCCESS;
 }//}}}
@@ -281,16 +315,12 @@ int advance_Bref_PML(  gridConfiguration *gridCfg,
     size_t
         ii, jj, kk;
 
-    UPML_Bref_faces(  gridCfg, G, boundaryG );
-    UPML_Bref_corners(gridCfg, G, boundaryG);
-    UPML_Bref_edges(  gridCfg, G, boundaryG );
-
 
 /*Core grid advancing*/
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
-    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
-        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
-            for (kk = d_absorb + 4 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
+    for (ii = d_absorb + 2 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 2 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 2 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
                 // -dBx/dt = dEz/dy - dEy/dz
                 EB_WAVE_ref(ii  ,jj+1,kk+1) += -1. * (dt/dx) * (
                                         +EB_WAVE_ref(ii  ,jj+2,kk+1) - EB_WAVE_ref(ii  ,jj  ,kk+1)
@@ -313,6 +343,10 @@ int advance_Bref_PML(  gridConfiguration *gridCfg,
         }
     }
 
+    UPML_Bref_faces(  gridCfg, G, boundaryG );
+    //UPML_Bref_corners(gridCfg, G, boundaryG);
+    //UPML_Bref_edges(  gridCfg, G, boundaryG );
+
     return EXIT_SUCCESS;
 }//}}}
 
@@ -322,17 +356,15 @@ int advance_E_PML(  gridConfiguration *gridCfg,
 //{{{
     size_t
         ii, jj, kk;
-
-    UPML_E_faces(  gridCfg, G, boundaryG );
-    UPML_E_corners(gridCfg, G, boundaryG );
-    UPML_E_edges(  gridCfg, G, boundaryG );
+    /*double
+        dxstore, dystore, dzstore;*/
 
 /*Core grid advancing*/
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
-    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
-        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
-            for (kk = d_absorb + 4 ; kk < Nz - d_absorb - 2 ; kk+=2) {
-
+    for (ii = d_absorb + 2 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 2 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 2 ; kk < Nz - d_absorb - 2 ; kk+=2) {
+                // dEx/dt = (dBz/dy - dBy/dz)
                 EB_WAVE(ii+1,jj  ,kk  ) += dt/dx * (
                                         +EB_WAVE(ii+1,jj+1,kk  ) - EB_WAVE(ii+1,jj-1,kk  )
                                         -EB_WAVE(ii+1,jj  ,kk+1) + EB_WAVE(ii+1,jj  ,kk-1)
@@ -349,12 +381,47 @@ int advance_E_PML(  gridConfiguration *gridCfg,
                                         +EB_WAVE(ii+1,jj  ,kk+1) - EB_WAVE(ii-1,jj  ,kk+1)
                                         -EB_WAVE(ii  ,jj+1,kk+1) + EB_WAVE(ii  ,jj-1,kk+1)
                                         ) - dt * J_B0(ii  ,jj  ,kk+1);
+
+                // dEx/dt = (dBz/dy - dBy/dz)
+                /*dxstore = DH_WAVE(ii+1,jj  ,kk  );
+                DH_WAVE(ii+1,jj  ,kk  ) = Cy(jj/2)*DH_WAVE(ii+1,jj  ,kk  ) + ( 2*dt/dx/F2y(jj/2) ) * (
+                                        +EB_WAVE(ii+1,jj+1,kk  ) - EB_WAVE(ii+1,jj-1,kk  )
+                                        -EB_WAVE(ii+1,jj  ,kk+1) + EB_WAVE(ii+1,jj  ,kk-1)
+                                        );
+
+                EB_WAVE(ii+1,jj  ,kk  ) = Cz(kk/2)*EB_WAVE(ii+1,jj  ,kk  ) + ( 1/F2z(kk/2) )*(
+                                        + F2x(ii/2)*DH_WAVE(ii+1,jj  ,kk  ) - F1x(ii/2)*dxstore );
+
+                // dEy/dt = (dBx/dz - dBz/dx)
+                dystore = DH_WAVE(ii  ,jj+1,kk  );
+                DH_WAVE(ii  ,jj+1,kk  ) = Cz(kk/2)*DH_WAVE(ii  ,jj+1,kk  ) + ( 2*dt/dx/F2z(kk/2) ) * (
+                                        +EB_WAVE(ii  ,jj+1,kk+1) - EB_WAVE(ii  ,jj+1,kk-1)
+                                        -EB_WAVE(ii+1,jj+1,kk  ) + EB_WAVE(ii-1,jj+1,kk  )
+                                        );
+
+                EB_WAVE(ii  ,jj+1,kk  ) = Cx(ii/2)*EB_WAVE(ii  ,jj+1,kk  ) + ( 1/F2x(ii/2) )*(
+                                        + F2y(jj/2)*DH_WAVE(ii  ,jj+1,kk  ) - F1y(jj/2)*dystore );
+
+                // dEz/dt = (dBy/dx - dBx/dy)
+                dzstore = DH_WAVE(ii  ,jj  ,kk+1);
+                DH_WAVE(ii  ,jj  ,kk+1) = Cx(ii/2)*DH_WAVE(ii  ,jj  ,kk+1) + ( 2*dt/dx/F2x(ii/2) ) * (
+                                        +EB_WAVE(ii+1,jj  ,kk+1) - EB_WAVE(ii-1,jj  ,kk+1)
+                                        -EB_WAVE(ii  ,jj+1,kk+1) + EB_WAVE(ii  ,jj-1,kk+1)
+                                        );
+
+                EB_WAVE(ii  ,jj  ,kk+1) = Cy(jj/2)*EB_WAVE(ii  ,jj  ,kk+1) + ( 1/F2y(jj/2) )*(
+                                        + F2z(kk/2)*DH_WAVE(ii  ,jj  ,kk+1) - F1z(kk/2)*dzstore );*/
             }
         }
     }
 
+    UPML_E_faces(  gridCfg, G, boundaryG );
+    UPML_E_corners(gridCfg, G, boundaryG );
+    UPML_E_edges(  gridCfg, G, boundaryG );
+
     return EXIT_SUCCESS;
 }
+
 
 int advance_Eref_PML(  gridConfiguration *gridCfg, 
                     systemGrid *G,
@@ -363,16 +430,12 @@ int advance_Eref_PML(  gridConfiguration *gridCfg,
     size_t
         ii, jj, kk;
 
-    UPML_Eref_faces(  gridCfg, G, boundaryG );
-    UPML_Eref_corners(gridCfg, G, boundaryG );
-    UPML_Eref_edges(  gridCfg, G, boundaryG );
-
 /*Core grid advancing*/
 #pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
-    for (ii = d_absorb + 4 ; ii < Nx - d_absorb - 2 ; ii+=2) {
-        for (jj = d_absorb + 4 ; jj < Ny - d_absorb - 2 ; jj+=2) {
-            for (kk = d_absorb + 4 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
-
+    for (ii = d_absorb + 2 ; ii < Nx - d_absorb - 2 ; ii+=2) {
+        for (jj = d_absorb + 2 ; jj < Ny - d_absorb - 2 ; jj+=2) {
+            for (kk = d_absorb + 2 ; kk < Nz_ref - d_absorb - 2 ; kk+=2) {
+                // dEx/dt = (dBz/dy - dBy/dz)
                 EB_WAVE_ref(ii+1,jj  ,kk  ) += dt/dx * (
                                         +EB_WAVE_ref(ii+1,jj+1,kk  ) - EB_WAVE_ref(ii+1,jj-1,kk  )
                                         -EB_WAVE_ref(ii+1,jj  ,kk+1) + EB_WAVE_ref(ii+1,jj  ,kk-1)
@@ -392,6 +455,10 @@ int advance_Eref_PML(  gridConfiguration *gridCfg,
             }
         }
     }
+
+    //UPML_Eref_faces(  gridCfg, G, boundaryG );
+    //UPML_Eref_corners(gridCfg, G, boundaryG );
+    //UPML_Eref_edges(  gridCfg, G, boundaryG );
 
     return EXIT_SUCCESS;
 }

@@ -29,10 +29,12 @@ void control_power(     gridConfiguration *gridCfg,
                         powerCalcValues *powerValStr,
                         saveData *saveDCfg, 
                         beamAntennaConfiguration *beamAnt,
+                        codeDiagnostics *diagnostic,
                         int t_int ){
 
         compute_power( gridCfg, G, powerValStr, t_int );
         compute_timetraces( gridCfg, saveDCfg, beamAnt, powerValStr, t_int );
+        computeFullEnergy( gridCfg, G, diagnostic, t_int);
 }
 
 
@@ -565,5 +567,33 @@ void compute_timetraces(        gridConfiguration *gridCfg,
             timetraces(T_wave,7)   = power_abs_y2/power_abs_ref;
 
         }
+
+}
+
+void computeFullEnergy( gridConfiguration *gridCfg, 
+                        systemGrid *G,
+                        codeDiagnostics *diagnostic, int t_int ){
+
+    size_t 
+        ii, jj, kk;
+    double 
+        E;
+
+    E = 0;
+
+#pragma omp parallel for collapse(3) default(shared) private(ii,jj,kk) 
+    for (ii = 2 ; ii < Nx-2 ; ii+=2) {
+        for (jj = 2 ; jj < Ny-2 ; jj+=2) {
+            for (kk = 2 ; kk < Nz-2 ; kk+=2) {
+
+                E += pow(EB_WAVE(ii+1,jj  ,kk  ),2) + pow(EB_WAVE(ii  ,jj+1,kk  ),2) + pow(EB_WAVE(ii  ,jj  ,kk+1),2) +
+                     pow(EB_WAVE(ii  ,jj+1,kk+1),2) + pow(EB_WAVE(ii+1,jj  ,kk+1),2) + pow(EB_WAVE(ii+1,jj+1,kk  ),2);
+
+
+            }
+        }
+    }
+
+    E(t_int) = E;
 
 }

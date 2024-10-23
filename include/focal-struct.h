@@ -91,6 +91,14 @@ typedef struct powerCalcValues{
         poynt_z1_ref;    
 } powerCalcValues;
 
+typedef struct codeDiagnostics{
+
+    double 
+        *E, *R,
+        *A_ref, *A_inc,
+        *PML_values;
+} codeDiagnostics;
+
 enum FieldID {
     FIELD_01,
     FIELD_02,

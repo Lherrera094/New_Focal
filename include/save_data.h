@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <math.h>
 
 #include "focal-struct.h"
 #include "macros-grid.h"
@@ -37,6 +38,9 @@ void save_antennaDetect(    gridConfiguration *gridCfg,
                             antennaDetector *antDetect,
                             char filename_hdf5[]);
 
-void writeFile( gridConfiguration *gridCfg, systemGrid *G, beamAntennaConfiguration *beamAnt );
+void writeFile( gridConfiguration *gridCfg, codeDiagnostics *diagnostict, saveData *saveDCfg );
+
+void writeUPMLdata( gridConfiguration *gridCfg, codeDiagnostics *diagnostic, 
+                    saveData *saveDCfg, systemGrid *G, int t_int );
 
 #endif

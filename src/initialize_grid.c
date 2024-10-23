@@ -5,11 +5,12 @@ void control_gridInit(  gridConfiguration *gridCfg,
                         saveData *saveDCfg, 
                         boundaryGrid *boundaryG,
                         beamAntennaConfiguration *beamAnt,
-                        antennaDetector *antDetect ){
+                        antennaDetector *antDetect,
+                        codeDiagnostics *diagnostic ){
 
     /*Initialize system*/
-    gridConfInit( gridCfg, saveDCfg, beamAnt, antDetect );
-    allocateMemory_structs( gridCfg, G, saveDCfg, beamAnt, antDetect );
+    gridConfInit( gridCfg, saveDCfg, beamAnt, antDetect);
+    allocateMemory_structs( gridCfg, G, saveDCfg, beamAnt, antDetect, diagnostic );
 
 }
 
@@ -269,7 +270,8 @@ void allocateMemory_structs( gridConfiguration *gridCfg,
                              systemGrid *G,
                              saveData *saveDCfg, 
                              beamAntennaConfiguration *beamAnt,
-                             antennaDetector *antDetect ){
+                             antennaDetector *antDetect,
+                             codeDiagnostics *diagnostic ){
 
     /*Initialize plasma-wave grid*/
     ALLOC_3D(G->EB_WAVE, Nx, Ny, Nz, double);
@@ -284,6 +286,8 @@ void allocateMemory_structs( gridConfiguration *gridCfg,
     /*Initialize beam variables*/
     ALLOC_2D(beamAnt->antField_xy, Nx/2, Ny/2, double);
     ALLOC_2D(beamAnt->antPhaseTerms, Nx/2, Ny/2, double);
+
+    ALLOC_1D(diagnostic->E, t_end, double);
 
 }
 

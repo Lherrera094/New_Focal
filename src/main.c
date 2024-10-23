@@ -18,6 +18,7 @@ int main( int argc, char *argv[] ){
     boundaryGrid                *boundaryG;
     beamAntennaConfiguration    *beamAnt;
     antennaDetector             *antDetect;
+    codeDiagnostics             *diagnostic;
 
     /*Alloc structs in memory*/
     ALLOC_1D( G, 1, systemGrid);
@@ -25,9 +26,11 @@ int main( int argc, char *argv[] ){
     ALLOC_1D( boundaryG, 1, boundaryGrid);
     ALLOC_1D( beamAnt, 1, beamAntennaConfiguration);
     ALLOC_1D( antDetect, 1, antennaDetector );
+    ALLOC_1D( diagnostic, 1, codeDiagnostics );
     
     /*Initialize system values*/
-    control_gridInit( &gridCfg, G, saveDCfg, boundaryG, beamAnt, antDetect);/*Initialize grid system matrices*/
+    control_gridInit( &gridCfg, G, saveDCfg, boundaryG, beamAnt, 
+                        antDetect, diagnostic );                            /*Initialize grid system matrices*/
     init_boundary(    &gridCfg, boundaryG);                                 /*Initialize Boundary conditions*/
     create_folder(    saveDCfg);                                            /*Call function to create folders*/
     init_antenna(     &gridCfg, beamAnt );                                  /*Initialize injection antenna*/
@@ -54,12 +57,17 @@ int main( int argc, char *argv[] ){
         advance_fields(&gridCfg, G, boundaryG);                                 /*advance_fields.c*/
 
         control_antenna_detector( antDetect, &gridCfg, G, t_int );              /*antenna_detector_module.c*/
-        control_power( &gridCfg, G, &powerValStr, saveDCfg, beamAnt, t_int );   /*power_module.c*/
+        control_power( &gridCfg, G, &powerValStr, saveDCfg, beamAnt, 
+                        diagnostic, t_int );                                    /*power_module.c*/
         save_data_Grid( &gridCfg, saveDCfg, G, t_int );                         /*save_data.c*/
+
+        writeUPMLdata( &gridCfg, diagnostic, saveDCfg, G, t_int );
     }
 
     /*Save simulation data*/
     control_writeHDF5( &gridCfg, saveDCfg, G, beamAnt,antDetect );
+
+    writeFile( &gridCfg, diagnostic, saveDCfg );
 
     /*Free allocated memmory*/
     free_allocated_memory( &gridCfg, saveDCfg, G , boundaryG, beamAnt);

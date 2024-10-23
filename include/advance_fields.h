@@ -9,6 +9,7 @@
 
 #include "focal-struct.h"
 #include "macros-grid.h"
+#include "auxiliar_module.h"
 #include "constants.h"
 #include "UPML_module.h"
 
@@ -35,7 +36,15 @@ int advance_B_PML(  gridConfiguration *gridCfg,
                     systemGrid *G,
                     boundaryGrid *boundaryG );
 
+int advance_Bref_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG );
+
 int advance_E_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G,
+                    boundaryGrid *boundaryG );
+
+int advance_Eref_PML(  gridConfiguration *gridCfg, 
                     systemGrid *G,
                     boundaryGrid *boundaryG );
 

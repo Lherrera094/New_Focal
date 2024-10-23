@@ -251,9 +251,12 @@ void save_data_Grid(    gridConfiguration *gridCfg,
 }
 
 /*This function is for diagnostics*/
-void writeFile( gridConfiguration *gridCfg, systemGrid *G, beamAntennaConfiguration *beamAnt ){
-    char filename[100];
-    sprintf(filename, "PhaseGouy.txt");
+void writeFile( gridConfiguration *gridCfg, codeDiagnostics *diagnostic, saveData *saveDCfg ){
+    
+    char filename[2048];
+    if (snprintf(filename, sizeof(filename),"%s/%s/Energy.txt", projectPath, foldername) >= sizeof(filename)) {
+            fprintf(stderr, "Error: Directory path is too long.\n");
+        }
 
     FILE *fptr = fopen(filename, "w");
 
@@ -261,9 +264,41 @@ void writeFile( gridConfiguration *gridCfg, systemGrid *G, beamAntennaConfigurat
         printf("Error opening the file. \n");
     }
 
-    for(int i = 0; i < Nx; i+=1){
-        for(int j = 0; j < Ny; j+=1){
-            fprintf(fptr, "(%d,%d,4): %.5f \n",i,j, EB_WAVE(i/2,j/2,4) );
+    fprintf(fptr, "Time,Energy\n");
+
+    for(int i = 0; i < t_end ; i+=1){
+        fprintf(fptr, "%d,%.5f \n", i, E(i) );
+    }
+    
+    fclose(fptr);
+}
+
+/*This function is for diagnostics*/
+void writeUPMLdata( gridConfiguration *gridCfg, codeDiagnostics *diagnostic, 
+                    saveData *saveDCfg, systemGrid *G, int t_int ){
+    
+    char filename[2048];
+    if (snprintf(filename, sizeof(filename),"%s/%s/UPML_%d.txt", projectPath, foldername, t_int) >= sizeof(filename)) {
+            fprintf(stderr, "Error: Directory path is too long.\n");
+        }
+
+    FILE *fptr = fopen(filename, "w");
+
+    if(fptr == NULL){
+        printf("Error opening the file. \n");
+    }
+
+    fprintf(fptr, "Pos,ValueX\n");
+
+    for(int ii=2 ; ii < Nx-2 ; ii+=2 ){
+        for(int jj=2 ; jj < Ny-2 ; jj+=2 ){
+            for(int kk=2 ; kk < Nz-2 ; kk+=2 ){
+
+                if(jj==Ny/4 && ii == Nx/4){
+                    fprintf(fptr, "%d,%.5f \n", kk/2, fabs(EB_WAVE(ii  ,jj  ,kk+1)) );
+                }
+
+            }
         }
     }
     

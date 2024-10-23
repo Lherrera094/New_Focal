@@ -16,7 +16,8 @@ void control_gridInit(  gridConfiguration *gridCfg,
                         saveData *saveDCfg, 
                         boundaryGrid *boundaryG,
                         beamAntennaConfiguration *beamAnt,
-                        antennaDetector *antDetect );
+                        antennaDetector *antDetect,
+                        codeDiagnostics *diagnostic );
 
 void gridConfInit(  gridConfiguration *gridCfg, 
                     saveData *saveDCfg, 
@@ -34,7 +35,8 @@ void allocateMemory_structs( gridConfiguration *gridCfg,
                              systemGrid *G, 
                              saveData *saveDCfg, 
                              beamAntennaConfiguration *beamAnt,
-                             antennaDetector *antDetect );
+                             antennaDetector *antDetect,
+                             codeDiagnostics *diagnostic );
 
 void print_systemConfiguration(gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt );
 
