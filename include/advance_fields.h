@@ -32,6 +32,9 @@ int advance_E( gridConfiguration *gridCfg,
 int advance_E_ref( gridConfiguration *gridCfg, 
                    systemGrid *G ); 
 
+int advance_J_PML(  gridConfiguration *gridCfg, 
+                    systemGrid *G );
+
 int advance_B_PML(  gridConfiguration *gridCfg, 
                     systemGrid *G,
                     boundaryGrid *boundaryG );

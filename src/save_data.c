@@ -294,8 +294,8 @@ void writeUPMLdata( gridConfiguration *gridCfg, codeDiagnostics *diagnostic,
         for(int jj=2 ; jj < Ny-2 ; jj+=2 ){
             for(int kk=2 ; kk < Nz-2 ; kk+=2 ){
 
-                if(jj==Ny/4 && ii == Nx/4){
-                    fprintf(fptr, "%d,%.5f \n", kk/2, fabs(EB_WAVE(ii  ,jj  ,kk+1)) );
+                if(jj==Ny/4 + 1 && ii == Nx/4 + 1){
+                    fprintf(fptr, "%d,%.10f \n", kk/2, fabs(EB_WAVE(ii  ,jj  ,kk+1)) );
                 }
 
             }

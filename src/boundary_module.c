@@ -902,8 +902,8 @@ double sigma(int pml_size, double nn, int m, double ds){
     double sig, sig_max, R_0;
       
     //R_0 = pow(10,-12);       /*If d = 40*/ 
-
     R_0 = pow(10,-6);
+
     sig_max = -(m+1)*log( R_0 )/(2*ds*pml_size);
     sig = pow( (nn) /(pml_size), m) * sig_max;
 
@@ -943,9 +943,8 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
             F2x(ii/2) = (2*kx) + (sig*dt);
             Cx(ii/2) = F1x(ii/2)/F2x(ii/2);
         }
-        //printf("C(%d) = %.5f \n", ii/2, Cx(ii/2) );
+        //printf("Cx(%d) = %.5f \n", ii/2, Cx(ii/2) );
     }
-    //exit(-1);
 
     count = (d_absorb-2)/2;
     for ( jj=2 ; jj < Ny-2 ; jj+=2 ) {
@@ -971,6 +970,7 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
             F2y(jj/2) = (2*ky) + (sig*dt);
             Cy(jj/2) = F1y(jj/2)/F2y(jj/2);
         }
+        //printf("Cy(%d) = %.5f \n", jj/2, Cy(jj/2) );
     }
 
     count = (d_absorb-2)/2;
@@ -997,6 +997,7 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
             F2z(kk/2) = (2*kz) + (sig*dt);
             Cz(kk/2) = F1z(kk/2)/F2z(kk/2);
         }
+        //printf("Cz(%d) = %.5f \n", kk/2, Cz(kk/2) );
     }
 
     count = (d_absorb-2)/2;
@@ -1022,6 +1023,8 @@ void init_UPML_parameters(   gridConfiguration *gridCfg, boundaryGrid *boundaryG
             F2zr(kk/2) = (2*kz) + (sig*dt);
             Czr(kk/2) = F1zr(kk/2)/F2zr(kk/2);
         }
+        //printf("C(%d) = %.5f \n", kk/2, Czr(kk/2) );
     }
+    //exit(-1);
 
 }

@@ -202,7 +202,16 @@ int add_source( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAnt,
                 EB_WAVE(ii+1,jj  ,ant_z  ) += source * (1.*cos(antAngle_zx/180.*M_PI));
             }
         }
-    }
+    } else if ( exc_signal == 6 ) {
+        //Ricker wavelet
+        double arg;
+ 
+        arg = 3.1415 * ( ( (dt/dx) * t_int - 0.0) / (period/2) - 1.0);
+        arg = arg*arg;
+        // Ex
+        EB_WAVE(ant_x+1,ant_y  ,ant_z  ) += (1.0 - 2.0 * arg) * exp(-arg);
+        
+    } 
 
     return EXIT_SUCCESS;
 }//}}}
@@ -296,7 +305,16 @@ int add_source_ref( gridConfiguration *gridCfg, beamAntennaConfiguration *beamAn
                 EB_WAVE_ref(ii+1,jj  ,ant_z  ) += source * (1.*cos( antAngle_zx/180.*M_PI ));
             }
         }
-    }
+    } else if ( exc_signal == 6 ) {
+        //Ricker wavelet
+        double arg;
+ 
+        arg = 3.1415 * ( ( (dt/dx) * t_int - 0.0) / (period/2) - 1.0);
+        arg = arg*arg;
+        // Ex
+        EB_WAVE_ref(ant_x+1,ant_y  ,ant_z  ) += (1.0 - 2.0 * arg) * exp(-arg);
+        
+    } 
 
     return EXIT_SUCCESS;
 }//}}}
